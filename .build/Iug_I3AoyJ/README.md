@@ -1,2 +1,0 @@
-# Dependancies
-dos2unix
