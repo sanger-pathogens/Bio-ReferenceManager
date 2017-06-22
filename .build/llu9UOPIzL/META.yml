@@ -1,0 +1,26 @@
+---
+abstract: 'turns baubles into trinkets'
+author:
+  - 'Andrew J. Page <ap13@sanger.ac.uk>'
+build_requires:
+  Data::Dumper: 0
+  Test::Files: 0
+  Test::Most: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 6.008, CPAN::Meta::Converter version 2.150010'
+license: gpl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Bio-ReferenceManager
+requires:
+  Cwd: 0
+  File::Copy: 0
+  File::Temp: 0
+  Moose: 0
+  strict: 0
+  warnings: 0
+version: 0.0.1
+x_serialization_backend: 'YAML::Tiny version 1.51'
