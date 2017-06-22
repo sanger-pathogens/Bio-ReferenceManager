@@ -132,6 +132,7 @@ sub _fix_sequence_names_output_filename
 
 sub _fix_sequence_names {
     my ( $self ) = @_;
+    my $sequence_counter = 1;
     my $seqio_obj = Bio::SeqIO->new(
         -file     => $self->_acgtn_only_output_filename,
         -format   => "fasta",
@@ -142,8 +143,9 @@ sub _fix_sequence_names {
     while ( my $seq_obj = $seqio_obj->next_seq ) {
         my $seq_name = $seq_obj->display_id;
         $seq_name =~ s![\W]!_!gi;
-        $seq_obj->display_id($seq_name);
+        $seq_obj->display_id($seq_name."_".$sequence_counter);
         $seqout->write_seq($seq_obj);
+        $sequence_counter++;
     }
 
 }
