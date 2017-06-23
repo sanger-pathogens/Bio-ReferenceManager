@@ -12,7 +12,7 @@ use Moose;
 use File::Copy;
 use File::Temp;
 use File::Basename;
-use Cwd;
+use Cwd qw(abs_path getcwd);
 use Bio::SeqIO;
 use Digest::MD5::File qw(file_md5_hex);
 use Bio::ReferenceManager::Reference;
@@ -56,6 +56,7 @@ sub fix_file_and_save {
         $final_outputname =  $self->basename_final_output_filename();
     }
     
+    print "Copy ".$self->_sort_by_name_output_filename."\t".$final_outputname ."\n" if $self->verbose;
     copy( $self->_sort_by_name_output_filename, $final_outputname );
 
     $self->reference->final_filename($final_outputname);    
@@ -85,11 +86,9 @@ sub is_valid_fasta {
         -format   => "fasta",
         -alphabet => 'dna'
     );
-    my $total_length =0;
+    my $total_length = 0;
     eval {
         while ( my $seq_obj = $seqio_obj->next_seq ) {
-
-            # do something with the sequence
             $total_length += $seq_obj->length();
         }
         $self->reference->sequence_length($total_length);
@@ -158,14 +157,14 @@ sub basename_final_output_filename {
     my ( $self ) = @_;
     my $path = join( '/', ( $self->reference_store_dir, basename($self->fasta_file)) );
     print $path. "\n" if $self->verbose;
-    return $path;
+    return abs_path($path);
 }
 
 sub md5_final_output_filename {
     my ( $self, $md5 ) = @_;
     my $path = join( '/', ( $self->reference_store_dir, $md5 . '.fa') );
     print $path. "\n" if $self->verbose;
-    return $path;
+    return abs_path($path);
 }
 
 no Moose;
