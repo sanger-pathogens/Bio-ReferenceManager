@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y dos2unix python3 python3-setuptools pyt
 RUN pip3 install pyfastaq
 
 RUN git clone https://github.com/andrewjpage/Bio-ReferenceManager.git
-RUN cpanm  Module::Metadata
+RUN cpanm Module::Metadata
 RUN cd Bio-ReferenceManager && dzil authordeps | cpanm
 RUN cd Bio-ReferenceManager && dzil listdeps | cpanm 
 RUN cd Bio-ReferenceManager && dzil install
