@@ -11,25 +11,16 @@ Take in a fasta file, fix it up, save it
 use Moose;
 use File::Copy;
 use File::Temp;
-use Cwd;
+use File::Basename;
+use Cwd qw(abs_path getcwd);
 use Bio::SeqIO;
 use Digest::MD5::File qw(file_md5_hex);
 use Bio::ReferenceManager::Reference;
 
-#Dos2unix
-#Is it a valid FASTA file?
-#Replace non-ACGTN- with N
-#Fix sequence names (max length, name present, illegal characters)
-#Sort sequences by name
-#Hash the file
-#Copy the file to central store, named with Hash (in directory called Hash).
-#Store original filename as metadata + any other info about sample (species etc..). JSON flatfile for all references or sqlite.
-#
-#enumerate_names
-
 has 'fasta_file'          => ( is => 'ro', isa => 'Str',  required => 1 );
 has 'reference_store_dir' => ( is => 'rw', isa => 'Str',  required => 1 );
 has 'verbose'             => ( is => 'rw', isa => 'Bool', default  => 0 );
+has 'name_as_hash'        => ( is => 'rw', isa => 'Bool', default  => 1 );
 
 has 'dos2unix_exec' => ( is => 'rw', isa => 'Str', default => 'dos2unix' );
 has 'fastaq_exec'   => ( is => 'rw', isa => 'Str', default => 'fastaq' );
@@ -54,10 +45,24 @@ sub fix_file_and_save {
 
     my $md5 = file_md5_hex( $self->_sort_by_name_output_filename );
     print $md5. "\n" if ( $self->verbose );
-    copy( $self->_sort_by_name_output_filename, $self->final_output_filename($md5) );
+    
+    my $final_outputname;
+    if($self->name_as_hash)
+    {
+        $final_outputname = $self->md5_final_output_filename($md5);
+    }
+    else
+    {
+        $final_outputname =  $self->basename_final_output_filename();
+    }
+    
+    print "Copy ".$self->_sort_by_name_output_filename."\t".$final_outputname ."\n" if $self->verbose;
+    copy( $self->_sort_by_name_output_filename, $final_outputname );
 
-    $self->reference->final_filename($self->final_output_filename($md5));
+    $self->reference->final_filename($final_outputname);    
     $self->reference->original_filename($self->fasta_file);
+    $self->reference->md5($md5);
+    $self->reference->basename($final_outputname, qr/\.[^.]*/);
 }
 
 sub _dos2unix_output_filename {
@@ -82,11 +87,9 @@ sub is_valid_fasta {
         -format   => "fasta",
         -alphabet => 'dna'
     );
-    my $total_length =0;
+    my $total_length = 0;
     eval {
         while ( my $seq_obj = $seqio_obj->next_seq ) {
-
-            # do something with the sequence
             $total_length += $seq_obj->length();
         }
         $self->reference->sequence_length($total_length);
@@ -150,11 +153,19 @@ sub _fix_sequence_names {
 
 }
 
-sub final_output_filename {
-    my ( $self, $md5 ) = @_;
-    my $path = join( '/', ( $self->reference_store_dir, $md5 . '.fa' ) );
+
+sub basename_final_output_filename {
+    my ( $self ) = @_;
+    my $path = join( '/', ( $self->reference_store_dir, basename($self->fasta_file)) );
     print $path. "\n" if $self->verbose;
-    return $path;
+    return abs_path($path);
+}
+
+sub md5_final_output_filename {
+    my ( $self, $md5 ) = @_;
+    my $path = join( '/', ( $self->reference_store_dir, $md5 . '.fa') );
+    print $path. "\n" if $self->verbose;
+    return abs_path($path);
 }
 
 no Moose;
