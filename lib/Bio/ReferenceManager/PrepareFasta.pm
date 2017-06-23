@@ -62,6 +62,7 @@ sub fix_file_and_save {
     $self->reference->final_filename($final_outputname);    
     $self->reference->original_filename($self->fasta_file);
     $self->reference->md5($md5);
+    $self->reference->basename($final_outputname, qr/\.[^.]*/);
 }
 
 sub _dos2unix_output_filename {

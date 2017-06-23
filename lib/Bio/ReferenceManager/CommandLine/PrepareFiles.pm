@@ -14,6 +14,9 @@ use Log::Log4perl qw(:easy);
 use Bio::ReferenceManager::PrepareFasta;
 use Cwd qw(abs_path);
 use File::Path qw(make_path);
+use JSON;
+use File::Slurper 'write_text';
+
 
 has 'args'        => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name' => ( is => 'ro', isa => 'Str',      required => 1 );
@@ -22,6 +25,7 @@ has 'help'        => ( is => 'rw', isa => 'Bool',     default  => 0 );
 has 'input_files'  => ( is => 'rw', isa  => 'ArrayRef', default => sub { [] } );
 has 'name_as_hash' => ( is => 'rw', isa  => 'Bool', default => 1 );
 has 'processors'   => ( is => 'rw', isa  => 'Int', default => 1 );
+has 'references_metadata'   => ( is => 'rw', isa  => 'Str', default => 'references_metadata' );
 has 'verbose'      => ( is => 'rw', isa  => 'Bool', default => 0 );
 has 'output_directory' => ( is => 'rw', isa  => 'Str', default => 'references' );
 has 'logger'       => ( is => 'ro', lazy => 1, builder => '_build_logger' );
@@ -36,11 +40,12 @@ sub _build_logger {
 sub BUILD {
     my ($self) = @_;
 
-    my ( $dont_use_hashes, $verbose, $processors, $output_directory, $help );
+    my ( $dont_use_hashes, $verbose, $processors, $output_directory,$references_metadata, $help );
 
     GetOptionsFromArray(
         $self->args,
         'd|dont_use_hashes=s' => \$dont_use_hashes,
+        'r|references_metadata=s' => \$references_metadata,
         'p|processors=i'      => \$processors,
         'v|verbose'           => \$verbose,
         'o|output_directory'  => \$output_directory,
@@ -56,6 +61,7 @@ sub BUILD {
     $self->name_as_hash(0) if ( defined($dont_use_hashes) );
     $self->processors($processors)           if ( defined($processors) );
     $self->output_directory($output_directory) if(defined($output_directory));
+    $self->references_metadata($references_metadata) if(defined($references_metadata));
 
     if ( @{ $self->args } < 1 ) {
         $self->logger->error("Error: You need to provide at least 1 file");
@@ -89,6 +95,8 @@ sub run {
         }
     }
 
+    my @references;
+    my @references_hash;
     for my $fasta_file ( @{ $self->input_files } ) {
         my $obj = Bio::ReferenceManager::PrepareFasta->new(
             fasta_file   => $fasta_file,
@@ -97,7 +105,10 @@ sub run {
             reference_store_dir => $self->output_directory
         );
         $obj->fix_file_and_save;
+        push(@references, $obj->reference);
+        push(@references_hash, $obj->reference->to_hash);
     }
+    write_text($self->references_metadata, to_json \@references_hash);
 }
 
 sub usage_text {
@@ -108,7 +119,9 @@ Usage: prepare_reference_files [options]
 Take in references and prepare them for adding to the reference tracking system.
 
 Options: -d       dont use hashes for filenames [False]
+         -r STR   File to store reference metadata [references_metadata]
          -p INT   number of processors [1]
+         -o STR   output directory [references]
          -v       verbose output to STDOUT
          -h       this help message
 
