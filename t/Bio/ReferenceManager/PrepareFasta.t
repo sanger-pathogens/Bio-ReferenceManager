@@ -33,6 +33,14 @@ compare_ok('t/data/PrepareFasta/expected_odd_chars_in_sequence.fa',
     'fix odd characters in sequence'
 );
 
+ok($obj = Bio::ReferenceManager::PrepareFasta->new(fasta_file => 't/data/PrepareFasta/odd_chars_in_sequence.fa', name_as_hash => 0,
+reference_store_dir => $tmp_dirname ), 'use input name as output name init');
+$obj->fix_file_and_save();
+is($obj->reference->final_filename(), $tmp_dirname.'/odd_chars_in_sequence.fa', 'output name should match input');
+compare_ok('t/data/PrepareFasta/expected_odd_chars_in_sequence.fa',
+    $obj->reference->final_filename(),
+    'same contents with input name as output filename '
+);
 
 ok($obj = Bio::ReferenceManager::PrepareFasta->new(fasta_file => 't/data/PrepareFasta/sequence_names_odd_characters.fa', 
 reference_store_dir => $tmp_dirname ), 'odd chars in sequence name init');
