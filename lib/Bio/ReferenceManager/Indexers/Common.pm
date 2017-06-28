@@ -10,6 +10,7 @@ package Bio::ReferenceManager::Indexers::Common;
 
 use Moose;
 use File::Basename;
+use Cwd qw(abs_path getcwd);
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'fasta_file'      => ( is => 'rw', isa => 'Str',      required => 1 );
@@ -88,8 +89,8 @@ sub list_files_not_created {
     my @files_not_created;
 
     for my $file ( @{ $self->expected_files } ) {
+        
         if ( -e $file && -s $file > 2 ) {
-
             # everything is okay
         }
         else {
@@ -98,6 +99,34 @@ sub list_files_not_created {
         }
     }
     return \@files_not_created;
+}
+
+sub versioned_directory_name
+{
+    my ($self) = @_; 
+    my $directory =  getcwd();
+    return join('/',($directory, $self->application_version_prefix));
+}
+
+sub run_indexing
+{
+   my ($self, $directory) = @_; 
+   
+   # Index in a separate subdirectory.
+   my $original_directory =  getcwd();
+   chdir( abs_path($directory) );
+
+   # Make a symlink from the fasta file to the current directory if it doesnt exist
+   my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file );
+   if(! -e "$filename.$suffix" && ! -l "$filename.$suffix")
+   {
+       symlink( $self->fasta_file,"$filename.$suffix");
+   }
+   
+   system($self->index_command);
+   
+   # Change back to the original working directory
+   chdir( $original_directory );
 }
 
 #create index files
