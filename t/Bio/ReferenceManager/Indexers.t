@@ -18,7 +18,7 @@ BEGIN {
     use_ok('Bio::ReferenceManager::Indexers');
 }
 
-my $tmp_dir_object = File::Temp->newdir( DIR => getcwd, CLEANUP => 0 );
+my $tmp_dir_object = File::Temp->newdir( DIR => getcwd, CLEANUP => 1 );
 my $tmp_dirname = $tmp_dir_object->dirname();
 my $obj;
 
@@ -27,9 +27,11 @@ copy( 't/data/Indexers/valid_file.fa', $tmp_dirname );
 # Picard not included here because of java issues on OSX
 ok(
     $obj = Bio::ReferenceManager::Indexers->new(
+        output_base_dir => $tmp_dirname,
         fasta_file => $tmp_dirname . '/valid_file.fa',
         indexing_executables =>
-          [ { class => 'Bowtie2' }, { class => 'Bwa' }, { class => 'RefStats' }, { class => 'Samtools' }, { class => 'Smalt' } ]
+          [ { class => 'Bowtie2' }, 
+          { class => 'Bwa' }, { class => 'RefStats' }, { class => 'Samtools' }, { class => 'Smalt' } ]
     ),
     'initialise object with all defaults'
 );

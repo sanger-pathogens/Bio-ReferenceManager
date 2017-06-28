@@ -17,8 +17,8 @@ has 'version_regex'   => ( is => 'rw', isa => 'Str',      default => 'Version: (
 has 'software_suffix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [ '.amb', '.ann', '.bwt', '.pac', '.sa' ] } );
 
 sub index_command {
-    my ($self) = @_;
-    return join( ' ', ( $self->executable, 'index', $self->fasta_file ) );
+    my ($self,$reference_file) = @_;
+    return join( ' ', ( $self->executable, 'index', $reference_file ) );
 }
 
 no Moose;

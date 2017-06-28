@@ -10,6 +10,7 @@ package Bio::ReferenceManager::Indexers::Common;
 
 use Moose;
 use File::Basename;
+use File::Copy;
 use Cwd qw(abs_path getcwd);
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
@@ -28,14 +29,8 @@ has 'software_version'  => ( is => 'rw', isa => 'Maybe[Str]', lazy    => 1, buil
 
 # needs to be overwritten
 sub index_command {
-    my ($self) = @_;
+    my ($self, $reference_file) = @_;
     return undef;
-}
-
-sub base_directory {
-    my ($self) = @_;
-    my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file );
-    return $dirs;
 }
 
 sub base_filename
@@ -98,12 +93,11 @@ sub list_files_not_created {
     my @files_not_created;
 
     for my $file ( @{ $self->expected_files($directory) } ) {
-        
-        if ( -e $file && -s $file > 2 ) {
+        if ( -e $file && -s $file ) {
             # everything is okay
         }
         else {
-            $self->logger->warn( "File has not been created correctly for " . $self->software_name . ": " . $file );
+            $self->logger->warn( "File not available for " . $self->software_name . ": " . $file );
             push( @files_not_created, $file );
         }
     }
@@ -120,7 +114,9 @@ sub versioned_directory_name
 sub run_indexing
 {
    my ($self, $directory) = @_; 
+   mkdir $directory if(! -d $directory);
 
+   $self->logger->warn( "Indexing in directory " . $directory);
    if(@{$self->files_to_be_created($directory)} > 0)
    {
      # Index in a separate subdirectory.
@@ -130,10 +126,11 @@ sub run_indexing
      # Make a symlink from the fasta file to the current directory if it doesnt exist
      if(! -e $self->base_filename && ! -l $self->base_filename && $self->fasta_file ne $self->base_filename)
      {
-         symlink( $self->fasta_file, $self->base_filename);
+         #symlink( $self->fasta_file, $directory);
+         copy( $self->fasta_file, $directory.'/'.$self->base_filename);
      }
      
-     system($self->index_command.' >/dev/null 2>&1');
+     system($self->index_command($directory.'/'.$self->base_filename).' >/dev/null 2>&1');
      # Change back to the original working directory
      chdir( $original_directory );
    }

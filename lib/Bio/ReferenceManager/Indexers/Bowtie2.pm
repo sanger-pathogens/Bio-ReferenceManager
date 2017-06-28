@@ -18,8 +18,8 @@ has 'version_parameter' => ( is => 'rw', isa => 'Str',      default => '--versio
 has 'software_suffix'   => ( is => 'rw', isa => 'ArrayRef', default => sub { [ '.1.bt2', '.2.bt2', '.3.bt2', '.4.bt2','.rev.1.bt2','.rev.2.bt2' ] } );
 
 sub index_command {
-    my ($self) = @_;
-    return join( ' ', ( $self->executable, $self->fasta_file, $self->fasta_file ) );
+    my ($self,$reference_file) = @_;
+    return join( ' ', ( $self->executable, $reference_file, $reference_file ) );
 }
 
 no Moose;

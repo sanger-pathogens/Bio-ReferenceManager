@@ -16,8 +16,8 @@ has 'software_name'   => ( is => 'rw', isa => 'Str',      default => 'ref-stats'
 has 'software_suffix' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['.refstats'] } );
 
 sub index_command {
-    my ($self) = @_;
-    return join( ' ', ( $self->executable, '-r', $self->fasta_file, '>', $self->fasta_file . '.refstats' ) );
+    my ($self,$reference_file) = @_;
+    return join( ' ', ( $self->executable, '-r', $reference_file, '>', $reference_file . '.refstats' ) );
 }
 
 no Moose;

@@ -18,8 +18,8 @@ has 'version_parameter' => ( is => 'rw', isa => 'Str',      default => 'version'
 has 'software_suffix'   => ( is => 'rw', isa => 'ArrayRef', default => sub { [ '.default.sma', '.default.smi' ] } );
 
 sub index_command {
-    my ($self) = @_;
-    return join( ' ', ( $self->executable, 'index', $self->fasta_file . '.default', $self->fasta_file ) );
+    my ($self,$reference_file) = @_;
+    return join( ' ', ( $self->executable, 'index', $reference_file . '.default', $reference_file ) );
 }
 
 no Moose;

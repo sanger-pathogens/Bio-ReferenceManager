@@ -18,8 +18,8 @@ has 'software_name'     => ( is => 'rw', isa => 'Str',      default => 'picard' 
 has 'software_suffix'   => ( is => 'rw', isa => 'ArrayRef', default => sub { ['.dict'] } );
 
 sub index_command {
-    my ($self) = @_;
-    return join( ' ', ( $self->java_exec, $self->executable, 'R=' . $self->fasta_file, 'O=' . $self->fasta_file . '.dict' ) );
+    my ($self,$reference_file) = @_;
+    return join( ' ', ( $self->java_exec, $self->executable, 'R=' . $reference_file, 'O=' . $reference_file . '.dict' ) );
 }
 
 sub _get_version_command {
