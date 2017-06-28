@@ -71,6 +71,7 @@ sub create_index_files {
             }
         }
     }
+    return $self;
 }
 
 1;

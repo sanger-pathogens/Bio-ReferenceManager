@@ -68,7 +68,7 @@ sub application_version_prefix {
 sub expected_files {
     my ($self) = @_;
     my @files;
-    for my $suffix ( @{ $self->software_suffix } ) {
+    for my $suffix (sort @{ $self->software_suffix } ) {
         push( @files, $self->fasta_file . $suffix );
     }
     return \@files;
@@ -99,7 +99,8 @@ sub list_files_not_created {
             push( @files_not_created, $file );
         }
     }
-    return \@files_not_created;
+    my @sorted_files = sort @files_not_created;
+    return \@sorted_files;
 }
 
 sub versioned_directory_name
@@ -112,34 +113,30 @@ sub versioned_directory_name
 sub run_indexing
 {
    my ($self, $directory) = @_; 
-   
-   # Index in a separate subdirectory.
-   my $original_directory =  getcwd();
-   chdir( abs_path($directory) );
 
-   # Make a symlink from the fasta file to the current directory if it doesnt exist
-   my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file );
-   if(! -e "$filename.$suffix" && ! -l "$filename.$suffix")
+   if(@{$self->files_to_be_created()} > 0)
    {
-       symlink( $self->fasta_file,"$filename.$suffix");
+     # Index in a separate subdirectory.
+     my $original_directory =  getcwd();
+     chdir( abs_path($directory) );
+       
+     # Make a symlink from the fasta file to the current directory if it doesnt exist
+     my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file );
+     if(! -e "$filename$suffix" && ! -l "$filename$suffix")
+     {
+         symlink( $self->fasta_file,"$filename$suffix");
+     }
+     
+     system($self->index_command);
+     # Change back to the original working directory
+     chdir( $original_directory );
    }
-   
-   system($self->index_command);
-   
-   # Change back to the original working directory
-   chdir( $original_directory );
+   else
+   {
+       $self->logger->warn( "No index files to create for " . $self->software_name );
+   }
+   return $self;
 }
 
-#create index files
-#default in the same directory as reference
-#*flag to overwrite, otherwise keep whats there
-#*note file types for each file
-#*syntax for creating index files
-#*input fasta file
-#*Check files are not empty
-#
-#create a versioned directory and place files there (application_version)
-#collate all commands proposed to be run to allow for parallelisation
-#
 no Moose;
 1;

@@ -5,5 +5,4 @@
 * bwa
 * bowtie2
 * samtools
-* refseq
 * Picard
