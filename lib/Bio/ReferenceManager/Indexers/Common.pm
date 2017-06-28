@@ -13,7 +13,7 @@ with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 has 'software_name'     => ( is => 'rw', isa => 'Str', required => 1 );
 has 'executable'        => ( is => 'rw', isa => 'Str', required => 1 );
 has 'version_parameter' => ( is => 'rw', isa => 'Str', default  => '' );
-has 'version_regex'     => ( is => 'rw', isa => 'Maybe[Str]', default => '[\d]+\.[\d]+\.[\d]+' );
+has 'version_regex'     => ( is => 'rw', isa => 'Maybe[Str]', default => '([\d]+\.[\d]+\.[\d]+)' );
 has 'software_version'  => ( is => 'rw', isa => 'Maybe[Str]', lazy =>1, builder => '_build_software_version' );
 
 sub _get_version_command

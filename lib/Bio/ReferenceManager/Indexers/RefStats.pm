@@ -1,4 +1,4 @@
-package Bio::ReferenceManager::Indexers::Refseq;
+package Bio::ReferenceManager::Indexers::RefStats;
 
 # ABSTRACT: create indexes for an application
 
@@ -11,8 +11,8 @@ create indexes for an application
 use Moose;
 extends 'Bio::ReferenceManager::Indexers::Common';
 
-has 'executable'          => ( is => 'rw', isa => 'Str', default => 'refseq' );
-has 'software_name'       => ( is => 'rw', isa => 'Str', default => 'refseq' );
+has 'executable'          => ( is => 'rw', isa => 'Str', default => 'ref-stats' );
+has 'software_name'       => ( is => 'rw', isa => 'Str', default => 'ref-stats' );
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
