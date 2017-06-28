@@ -11,7 +11,7 @@ create indexes for an application
 use Moose;
 extends 'Bio::ReferenceManager::Indexers::Common';
 
-has 'executable'        => ( is => 'rw', isa => 'Str',      default => 'java net.sf.picard.sam.CreateSequenceDictionary' );
+has 'executable'        => ( is => 'rw', isa => 'Str',      default => ' net.sf.picard.sam.CreateSequenceDictionary' );
 has 'version_regex'     => ( is => 'rw', isa => 'Str',      default => '([\d]+\.[\d]+)' );
 has 'version_parameter' => ( is => 'rw', isa => 'Str',      default => '--version' );
 has 'software_name'     => ( is => 'rw', isa => 'Str',      default => 'picard' );
@@ -19,7 +19,12 @@ has 'software_suffix'   => ( is => 'rw', isa => 'ArrayRef', default => sub { ['.
 
 sub index_command {
     my ($self) = @_;
-    return join( ' ', ( $self->executable, 'R=' . $self->fasta_file, 'O=' . $self->fasta_file . '.dict' ) );
+    return join( ' ', ( $self->java_exec, $self->executable, 'R=' . $self->fasta_file, 'O=' . $self->fasta_file . '.dict' ) );
+}
+
+sub _get_version_command {
+    my ($self) = @_;
+    return join( ' ', ( $self->java_exec, $self->executable, $self->version_parameter, '2>&1' ) );
 }
 
 no Moose;

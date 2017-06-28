@@ -19,6 +19,7 @@ has 'executable'      => ( is => 'rw', isa => 'Str',      required => 1 );
 has 'software_suffix' => ( is => 'rw', isa => 'ArrayRef', default  => sub { [] } );
 
 has 'overwrite_files' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'java_exec'       => ( is => 'rw', isa => 'Str', default  => 'java' );
 
 has 'version_parameter' => ( is => 'rw', isa => 'Str',        default => '' );
 has 'version_regex'     => ( is => 'rw', isa => 'Maybe[Str]', default => '([\d]+\.[\d]+\.[\d]+)' );

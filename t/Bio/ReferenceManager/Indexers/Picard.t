@@ -19,13 +19,14 @@ my $obj;
 ok(
     $obj = Bio::ReferenceManager::Indexers::Picard->new(
         executable => $cwd . '/t/bin/dummy_picard',
-        fasta_file => 'abc.fa'
+        fasta_file => 'abc.fa',
+        java_exec  => ''
     ),
     'initialise with defaults'
 );
 ok( my $software_version = $obj->software_version(), 'get software version' );
 like( $software_version, qr/^[]\d]+\.[\d]+/, 'got a version number out' );
-is( $obj->index_command, $cwd . '/t/bin/dummy_picard R=abc.fa O=abc.fa.dict', 'indexing command' );
+is( $obj->index_command, " ".$cwd . '/t/bin/dummy_picard R=abc.fa O=abc.fa.dict', 'indexing command' );
 is_deeply( $obj->expected_files, ['abc.fa.dict'], 'expected files' );
 
 done_testing();

@@ -10,59 +10,67 @@ Take in a fasta file, fix it up, save it
 
 use Moose;
 use Cwd qw(abs_path getcwd);
-use Bio::ReferenceManager::Indexers::Bowtie2;
-use Bio::ReferenceManager::Indexers::Bwa;
-use Bio::ReferenceManager::Indexers::Picard;
-use Bio::ReferenceManager::Indexers::RefStats;
-use Bio::ReferenceManager::Indexers::Samtools;
-use Bio::ReferenceManager::Indexers::Smalt;
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
-has 'fasta_file' => ( is => 'rw', isa => 'Str', required => 1 );
+has 'fasta_file'      => ( is => 'rw', isa => 'Str',  required => 1 );
+has 'overwrite_files' => ( is => 'rw', isa => 'Bool', default  => 0 );
+has 'java_exec'       => ( is => 'rw', isa => 'Str', default  => 'java' );
 
-sub create_bowtie2_index {
+has 'indexing_executables' => (
+    is      => 'rw',
+    isa     => 'ArrayRef',
+    default => sub {
+        [
+            { class => 'Bowtie2' },
+            {
+                class                  => 'Bwa',
+                additional_executables => [ 'bwa-0.7.10', 'bwa-0.7.5a' ]
+            },
+            { class => 'Picard' },
+            { class => 'RefStats' },
+            {
+                class                  => 'Samtools',
+                additional_executables => ['samtools-1.3']
+            },
+            { class => 'Smalt' }
+        ];
+    }
+);
+
+# Create index files for the default versions (listed in the classes)
+# and for additional versions.
+sub create_index_files {
     my ($self) = @_;
-    my $indexer = Bio::ReferenceManager::Indexers::Bowtie2->new( fasta_file => $self->fasta_file, logger => $self->logger );
-    $indexer->run_indexing( getcwd() );
-    $indexer->run_indexing( $indexer->versioned_directory_name() );
+    for my $index_software ( @{ $self->indexing_executables } ) {
+        my $index_class = "Bio::ReferenceManager::Indexers::" . $index_software->{class};
+        eval "require $index_class";
 
-    # you can use a different version here by setting the executable to be a different name e.g.
-    # Bio::ReferenceManager::Indexers::Bowtie2->new(fasta_file => $self->fasta_file, executable => 'bowtie2-build-1.2.3')
-}
+        # default settings
+        $self->logger->info( "Creating index files for " . $index_software->{class} );
+        my $indexer = $index_class->new(
+            fasta_file      => $self->fasta_file,
+            logger          => $self->logger,
+            overwrite_files => $self->overwrite_files,
+            java_exec       => $self->java_exec,
+        );
+        $indexer->run_indexing( $indexer->base_directory );
+        $indexer->run_indexing( $indexer->versioned_directory_name() );
 
-sub create_bwa_index {
-    my ($self) = @_;
-    my $indexer = Bio::ReferenceManager::Indexers::Bwa->new( fasta_file => $self->fasta_file, logger => $self->logger );
-    $indexer->run_indexing( getcwd() );
-    $indexer->run_indexing( $indexer->versioned_directory_name() );
-}
-
-sub create_picard_index {
-    my ($self) = @_;
-    my $indexer = Bio::ReferenceManager::Indexers::Picard->new( fasta_file => $self->fasta_file, logger => $self->logger );
-    $indexer->run_indexing( getcwd() );
-    $indexer->run_indexing( $indexer->versioned_directory_name() );
-}
-
-sub create_refstats_index {
-    my ($self) = @_;
-    my $indexer = Bio::ReferenceManager::Indexers::RefStats->new( fasta_file => $self->fasta_file, logger => $self->logger );
-    $indexer->run_indexing( getcwd() );
-    $indexer->run_indexing( $indexer->versioned_directory_name() );
-}
-
-sub create_samtools_index {
-    my ($self) = @_;
-    my $indexer = Bio::ReferenceManager::Indexers::Samtools->new( fasta_file => $self->fasta_file, logger => $self->logger );
-    $indexer->run_indexing( getcwd() );
-    $indexer->run_indexing( $indexer->versioned_directory_name() );
-}
-
-sub create_smalt_index {
-    my ($self) = @_;
-    my $indexer = Bio::ReferenceManager::Indexers::Smalt->new( fasta_file => $self->fasta_file, logger => $self->logger );
-    $indexer->run_indexing( getcwd() );
-    $indexer->run_indexing( $indexer->versioned_directory_name() );
+        # create index files in subdirs for other versons of the same software
+        if ( defined( $index_software->{additional_executables} ) ) {
+            for my $executable ( @{ $index_software->{additional_executables} } ) {
+                $self->logger->info( "Creating index files for " . $executable );
+                $indexer = $index_class->new(
+                    fasta_file      => $self->fasta_file,
+                    logger          => $self->logger,
+                    overwrite_files => $self->overwrite_files,
+                    executable      => $executable,
+                    java_exec       => $self->java_exec
+                );
+                $indexer->run_indexing( $indexer->versioned_directory_name() );
+            }
+        }
+    }
 }
 
 1;
