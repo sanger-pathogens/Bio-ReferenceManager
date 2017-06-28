@@ -16,26 +16,18 @@ use Cwd qw(abs_path);
 use File::Path qw(make_path);
 use JSON;
 use File::Slurper 'write_text';
-
+with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'args'        => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name' => ( is => 'ro', isa => 'Str',      required => 1 );
 has 'help'        => ( is => 'rw', isa => 'Bool',     default  => 0 );
-
+has 'verbose'      => ( is => 'rw', isa  => 'Bool', default => 0 );
 has 'input_files'  => ( is => 'rw', isa  => 'ArrayRef', default => sub { [] } );
 has 'name_as_hash' => ( is => 'rw', isa  => 'Bool', default => 1 );
 has 'processors'   => ( is => 'rw', isa  => 'Int', default => 1 );
 has 'references_metadata'   => ( is => 'rw', isa  => 'Str', default => 'references_metadata' );
-has 'verbose'      => ( is => 'rw', isa  => 'Bool', default => 0 );
 has 'output_directory' => ( is => 'rw', isa  => 'Str', default => 'references' );
-has 'logger'       => ( is => 'ro', lazy => 1, builder => '_build_logger' );
 
-sub _build_logger {
-    my ($self) = @_;
-    Log::Log4perl->easy_init($ERROR);
-    my $logger = get_logger();
-    return $logger;
-}
 
 sub BUILD {
     my ($self) = @_;
@@ -102,7 +94,8 @@ sub run {
             fasta_file   => $fasta_file,
             verbose      => $self->verbose,
             name_as_hash => $self->name_as_hash,
-            reference_store_dir => $self->output_directory
+            reference_store_dir => $self->output_directory,
+            logger => $self->logger,
         );
         $obj->fix_file_and_save;
         push(@references, $obj->reference);

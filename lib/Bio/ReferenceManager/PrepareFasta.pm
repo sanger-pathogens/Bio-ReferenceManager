@@ -16,6 +16,7 @@ use Cwd qw(abs_path getcwd);
 use Bio::SeqIO;
 use Digest::MD5::File qw(file_md5_hex);
 use Bio::ReferenceManager::Reference;
+with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'fasta_file'          => ( is => 'ro', isa => 'Str',  required => 1 );
 has 'reference_store_dir' => ( is => 'rw', isa => 'Str',  required => 1 );

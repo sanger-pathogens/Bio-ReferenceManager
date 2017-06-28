@@ -8,7 +8,7 @@ FROM debian:testing
 #
 MAINTAINER ap13@sanger.ac.uk
 
-RUN apt-get update && apt-get install -y dos2unix python3 python3-setuptools python3-biopython python3-pip git cpanminus libdist-zilla-perl libmodule-install-perl
+RUN apt-get update && apt-get install -y dos2unix python3 python3-setuptools python3-biopython python3-pip git cpanminus libdist-zilla-perl libmodule-install-perl samtools smalt bwa bowtie2
 RUN pip3 install pyfastaq
 
 RUN git clone https://github.com/andrewjpage/Bio-ReferenceManager.git

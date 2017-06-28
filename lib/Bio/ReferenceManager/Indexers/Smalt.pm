@@ -12,6 +12,7 @@ use Moose;
 extends 'Bio::ReferenceManager::Indexers::Common';
 
 has 'executable'          => ( is => 'rw', isa => 'Str', default => 'smalt' );
+has 'software_name'       => ( is => 'rw', isa => 'Str', default => 'smalt' );
 has 'version_regex'       => ( is => 'rw', isa => 'Str', default => 'Version: ([\d]+\.[\d]+\.[\d]+)' );
 has 'version_parameter'   => ( is => 'rw', isa => 'Str', default => 'version' );
 

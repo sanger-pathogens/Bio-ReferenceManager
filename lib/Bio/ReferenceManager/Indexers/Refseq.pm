@@ -12,6 +12,7 @@ use Moose;
 extends 'Bio::ReferenceManager::Indexers::Common';
 
 has 'executable'          => ( is => 'rw', isa => 'Str', default => 'refseq' );
+has 'software_name'       => ( is => 'rw', isa => 'Str', default => 'refseq' );
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
