@@ -11,14 +11,13 @@ create indexes for an application
 use Moose;
 extends 'Bio::ReferenceManager::Indexers::Common';
 
-has 'executable'          => ( is => 'rw', isa => 'Str', default => 'ref-stats' );
-has 'software_name'       => ( is => 'rw', isa => 'Str', default => 'ref-stats' );
-has 'software_suffix'     => ( is => 'rw', isa => 'ArrayRef', default => sub {['.refstats']} );
+has 'executable'      => ( is => 'rw', isa => 'Str',      default => 'ref-stats' );
+has 'software_name'   => ( is => 'rw', isa => 'Str',      default => 'ref-stats' );
+has 'software_suffix' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['.refstats'] } );
 
-sub index_command
-{
+sub index_command {
     my ($self) = @_;
-    return join(' ',($self->executable, '-r', $self->fasta_file, '>', $self->fasta_file.'.refstats'));
+    return join( ' ', ( $self->executable, '-r', $self->fasta_file, '>', $self->fasta_file . '.refstats' ) );
 }
 
 no Moose;
