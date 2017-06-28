@@ -16,6 +16,7 @@ with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 has 'fasta_file'      => ( is => 'rw', isa => 'Str',      required => 1 );
 has 'software_name'   => ( is => 'rw', isa => 'Str',      required => 1 );
 has 'executable'      => ( is => 'rw', isa => 'Str',      required => 1 );
+has 'output_base_dir' => ( is => 'rw', isa => 'Str',      default  => sub { getcwd();});
 has 'software_suffix' => ( is => 'rw', isa => 'ArrayRef', default  => sub { [] } );
 
 has 'overwrite_files' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -35,6 +36,13 @@ sub base_directory {
     my ($self) = @_;
     my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file );
     return $dirs;
+}
+
+sub base_filename
+{
+    my ($self) = @_;
+    my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file );
+    return $filename.$suffix;
 }
 
 sub _get_version_command {
@@ -66,30 +74,30 @@ sub application_version_prefix {
 }
 
 sub expected_files {
-    my ($self) = @_;
+    my ($self,$directory) = @_;
     my @files;
     for my $suffix (sort @{ $self->software_suffix } ) {
-        push( @files, $self->fasta_file . $suffix );
+        push( @files,$directory.'/'. $self->base_filename . $suffix );
     }
     return \@files;
 }
 
 sub files_to_be_created {
-    my ($self) = @_;
+    my ($self, $directory) = @_;
 
     if ( $self->overwrite_files ) {
-        return $self->expected_files;
+        return $self->expected_files($directory);
     }
     else {
-        return $self->list_files_not_created;
+        return $self->list_files_not_created($directory);
     }
 }
 
 sub list_files_not_created {
-    my ($self) = @_;
+    my ($self,$directory) = @_;
     my @files_not_created;
 
-    for my $file ( @{ $self->expected_files } ) {
+    for my $file ( @{ $self->expected_files($directory) } ) {
         
         if ( -e $file && -s $file > 2 ) {
             # everything is okay
@@ -106,28 +114,26 @@ sub list_files_not_created {
 sub versioned_directory_name
 {
     my ($self) = @_; 
-    my $directory =  getcwd();
-    return join('/',($directory, $self->application_version_prefix));
+    return join('/',($self->output_base_dir, $self->application_version_prefix));
 }
 
 sub run_indexing
 {
    my ($self, $directory) = @_; 
 
-   if(@{$self->files_to_be_created()} > 0)
+   if(@{$self->files_to_be_created($directory)} > 0)
    {
      # Index in a separate subdirectory.
      my $original_directory =  getcwd();
      chdir( abs_path($directory) );
        
      # Make a symlink from the fasta file to the current directory if it doesnt exist
-     my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file );
-     if(! -e "$filename$suffix" && ! -l "$filename$suffix")
+     if(! -e $self->base_filename && ! -l $self->base_filename && $self->fasta_file ne $self->base_filename)
      {
-         symlink( $self->fasta_file,"$filename$suffix");
+         symlink( $self->fasta_file, $self->base_filename);
      }
      
-     system($self->index_command);
+     system($self->index_command.' >/dev/null 2>&1');
      # Change back to the original working directory
      chdir( $original_directory );
    }

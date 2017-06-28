@@ -15,6 +15,7 @@ with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 has 'fasta_file'      => ( is => 'rw', isa => 'Str',  required => 1 );
 has 'overwrite_files' => ( is => 'rw', isa => 'Bool', default  => 0 );
 has 'java_exec'       => ( is => 'rw', isa => 'Str', default  => 'java' );
+has 'output_base_dir' => ( is => 'rw', isa => 'Str',      default  => sub { getcwd();});
 
 has 'indexing_executables' => (
     is      => 'rw',
@@ -54,6 +55,7 @@ sub create_index_files {
             java_exec       => $self->java_exec,
         );
         $indexer->run_indexing( $indexer->base_directory );
+        print $indexer->versioned_directory_name() ."\n";
         $indexer->run_indexing( $indexer->versioned_directory_name() );
 
         # create index files in subdirs for other versons of the same software
