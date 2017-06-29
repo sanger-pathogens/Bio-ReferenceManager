@@ -126,8 +126,7 @@ sub run_indexing
      # Make a symlink from the fasta file to the current directory if it doesnt exist
      if(! -e $self->base_filename && ! -l $self->base_filename && $self->fasta_file ne $self->base_filename)
      {
-         #symlink( $self->fasta_file, $directory);
-         copy( $self->fasta_file, $directory.'/'.$self->base_filename);
+         symlink( $self->fasta_file, $directory.'/'.$self->base_filename);
      }
      
      system($self->index_command($directory.'/'.$self->base_filename).' >/dev/null 2>&1');
