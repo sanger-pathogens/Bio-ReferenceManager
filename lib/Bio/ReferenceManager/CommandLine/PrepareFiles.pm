@@ -10,7 +10,6 @@ prepare input files
 
 use Moose;
 use Getopt::Long qw(GetOptionsFromArray);
-use Log::Log4perl qw(:easy);
 use Bio::ReferenceManager::PrepareFasta;
 use Cwd qw(abs_path);
 use File::Path qw(make_path);
@@ -36,11 +35,11 @@ sub BUILD {
 
     GetOptionsFromArray(
         $self->args,
-        'd|dont_use_hashes=s' => \$dont_use_hashes,
+        'd|dont_use_hashes' => \$dont_use_hashes,
         'r|references_metadata=s' => \$references_metadata,
         'p|processors=i'      => \$processors,
         'v|verbose'           => \$verbose,
-        'o|output_directory'  => \$output_directory,
+        'o|output_directory=s'  => \$output_directory,
         'h|help'              => \$help,
     );
 
@@ -108,7 +107,7 @@ sub usage_text {
     my ($self) = @_;
 
     return <<USAGE;
-Usage: prepare_reference_files [options]
+Usage: refman_prepare_reference_files [options]
 Take in references and prepare them for adding to the reference tracking system.
 
 Options: -d       dont use hashes for filenames [False]
