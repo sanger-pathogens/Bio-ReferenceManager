@@ -13,6 +13,7 @@ use File::Copy;
 use File::Temp;
 use File::Basename;
 use Cwd qw(abs_path getcwd);
+use File::Path qw(make_path);
 use Bio::SeqIO;
 use Digest::MD5::File qw(file_md5_hex);
 use Bio::ReferenceManager::Reference;
@@ -20,8 +21,8 @@ with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'fasta_file'          => ( is => 'ro', isa => 'Str',  required => 1 );
 has 'reference_store_dir' => ( is => 'rw', isa => 'Str',  required => 1 );
-has 'verbose'             => ( is => 'rw', isa => 'Bool', default  => 0 );
 has 'name_as_hash'        => ( is => 'rw', isa => 'Bool', default  => 1 );
+has 'hash_toplevel_dir_name' => ( is => 'rw', isa => 'Str', default  => 'hash');
 
 has 'dos2unix_exec' => ( is => 'rw', isa => 'Str', default => 'dos2unix' );
 has 'fastaq_exec'   => ( is => 'rw', isa => 'Str', default => 'fastaq' );
@@ -45,11 +46,12 @@ sub fix_file_and_save {
     $self->_run_sort_by_name();
 
     my $md5 = file_md5_hex( $self->_sort_by_name_output_filename );
-    print $md5. "\n" if ( $self->verbose );
+    $self->logger->info( "MD5 for ".$self->fasta_file.": $md5" );
     
     my $final_outputname;
     if($self->name_as_hash)
     {
+        
         $final_outputname = $self->md5_final_output_filename($md5);
     }
     else
@@ -57,7 +59,7 @@ sub fix_file_and_save {
         $final_outputname =  $self->basename_final_output_filename();
     }
     
-    print "Copy ".$self->_sort_by_name_output_filename."\t".$final_outputname ."\n" if $self->verbose;
+    $self->logger->info(  "Copy file ".$self->_sort_by_name_output_filename." to ".$final_outputname );
     copy( $self->_sort_by_name_output_filename, $final_outputname );
 
     $self->reference->final_filename($final_outputname);    
@@ -75,7 +77,7 @@ sub _run_dos2unix {
     my ($self) = @_;
     my $cmd = join( ' ', ( $self->dos2unix_exec, '-n', $self->fasta_file, $self->_dos2unix_output_filename, '> /dev/null 2>&1' ) );
 
-    print $cmd. "\n" if ( $self->verbose );
+    $self->logger->info( "Command for dos2unix: $cmd" );
 
     system($cmd);
     1;
@@ -107,7 +109,7 @@ sub _run_acgtn_only {
     my ($self) = @_;
     my $cmd = join( ' ', ( $self->fastaq_exec, 'acgtn_only', $self->_dos2unix_output_filename, $self->_acgtn_only_output_filename ) );
 
-    print $cmd. "\n" if ( $self->verbose );
+    $self->logger->info( "Command for fastaq acgtn only: $cmd" );
 
     system($cmd);
     1;
@@ -122,7 +124,7 @@ sub _run_sort_by_name {
     my ($self) = @_;
     my $cmd = join( ' ', ( $self->fastaq_exec, 'sort_by_name', $self->_fix_sequence_names_output_filename, $self->_sort_by_name_output_filename ) );
 
-    print $cmd. "\n" if ( $self->verbose );
+    $self->logger->info( "Command for fastaq sort by name only: $cmd" );
 
     system($cmd);
     1;
@@ -154,19 +156,34 @@ sub _fix_sequence_names {
 
 }
 
-
 sub basename_final_output_filename {
     my ( $self ) = @_;
-    my $path = join( '/', ( $self->reference_store_dir, basename($self->fasta_file)) );
-    print $path. "\n" if $self->verbose;
-    return abs_path($path);
+
+    my ( $filename, $dirs, $suffix ) = fileparse($self->fasta_file, qr/\.[^.]*/);
+    
+    my $genus = 'unknown';
+    my $species = 'unknown';
+    my @genus_species = split('_', basename($filename));
+    $genus = $genus_species[0] if(@genus_species >= 1);
+    $species = $genus_species[1] if(@genus_species >= 2);
+    
+    my $directory = join( '/', ( $self->reference_store_dir,$genus,$species));
+    make_path($directory) if( ! -d $directory);
+
+    my $path = join( '/', ( abs_path($directory), $filename.'.fa') );
+    $self->logger->info( "Final output filename: $path" );
+    return $path;
 }
 
 sub md5_final_output_filename {
     my ( $self, $md5 ) = @_;
-    my $path = join( '/', ( $self->reference_store_dir, $md5 . '.fa') );
-    print $path. "\n" if $self->verbose;
-    return abs_path($path);
+    
+    my $directory = join( '/', ( $self->reference_store_dir,$self->hash_toplevel_dir_name, $md5));
+    
+    make_path($directory) if( ! -d $directory);
+    my $path = join( '/', ( abs_path($directory), $md5 . '.fa') );
+    $self->logger->info( "Final output filename MD5: $path" );
+    return $path;
 }
 
 no Moose;

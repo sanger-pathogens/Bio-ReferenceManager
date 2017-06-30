@@ -29,6 +29,4 @@ ok($obj = Bio::ReferenceManager::VRTrack::Assemblies->new(dbh => $dbh, reference
 is_deeply([$reference_not_in_db], $obj->references_needing_to_be_added, '1 reference should be added');
 is(1, $obj->insert_references_into_assembly_table, '1 reference added');
 
-
-
 done_testing();
