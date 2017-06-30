@@ -6,7 +6,6 @@ use Test::Files;
 use File::Temp;
 use Cwd;
 use Digest::MD5::File;
-use Log::Log4perl qw(:easy);
 
 BEGIN { unshift( @INC, './lib' ) }
 
@@ -15,9 +14,6 @@ BEGIN {
     use_ok('Bio::ReferenceManager::PrepareFasta');
 }
 
-Log::Log4perl->easy_init($ERROR);
-my $logger = get_logger();
-$logger->level(10000);
 
 my $tmp_dir_object = File::Temp->newdir( DIR => getcwd, CLEANUP => 1 );
 my $tmp_dirname = $tmp_dir_object->dirname();
@@ -28,7 +24,6 @@ ok(
     $obj = Bio::ReferenceManager::PrepareFasta->new(
         fasta_file          => 't/data/PrepareFasta/invalid_file.fa',
         reference_store_dir => $tmp_dirname,
-        logger => $logger
     ),
     'invalid file init'
 );

@@ -15,6 +15,8 @@ use File::Basename;
 use Cwd qw(abs_path getcwd);
 use File::Path qw(make_path);
 use Bio::SeqIO;
+use JSON;
+use File::Slurper 'write_text';
 use Digest::MD5::File qw(file_md5_hex);
 use Bio::ReferenceManager::Reference;
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
@@ -23,6 +25,8 @@ has 'fasta_file'          => ( is => 'ro', isa => 'Str',  required => 1 );
 has 'reference_store_dir' => ( is => 'rw', isa => 'Str',  required => 1 );
 has 'name_as_hash'        => ( is => 'rw', isa => 'Bool', default  => 1 );
 has 'hash_toplevel_dir_name' => ( is => 'rw', isa => 'Str', default  => 'hash');
+
+has 'reference_output_directory'   => ( is => 'rw', isa => 'Maybe[Str]', required => 0);
 
 has 'dos2unix_exec' => ( is => 'rw', isa => 'Str', default => 'dos2unix' );
 has 'fastaq_exec'   => ( is => 'rw', isa => 'Str', default => 'fastaq' );
@@ -51,7 +55,6 @@ sub fix_file_and_save {
     my $final_outputname;
     if($self->name_as_hash)
     {
-        
         $final_outputname = $self->md5_final_output_filename($md5);
     }
     else
@@ -65,7 +68,17 @@ sub fix_file_and_save {
     $self->reference->final_filename($final_outputname);    
     $self->reference->original_filename($self->fasta_file);
     $self->reference->md5($md5);
-    $self->reference->basename($final_outputname, qr/\.[^.]*/);
+    
+    my ( $filename, $dirs, $suffix ) = fileparse($final_outputname, qr/\.[^.]*/);
+    $self->reference->basename($filename, qr/\.[^.]*/);
+}
+
+sub write_metadata_to_json
+{
+    my ($self, $metadata_filename) = @_;
+    my $outputfile = join('/',($self->reference_output_directory, $metadata_filename));
+    $self->logger->info( "Writing meta data to JSON file: ".$outputfile );
+    write_text($outputfile, to_json $self->reference->to_hash);
 }
 
 sub _dos2unix_output_filename {
@@ -169,6 +182,7 @@ sub basename_final_output_filename {
     
     my $directory = join( '/', ( $self->reference_store_dir,$genus,$species));
     make_path($directory) if( ! -d $directory);
+    $self->reference_output_directory(abs_path($directory));
 
     my $path = join( '/', ( abs_path($directory), $filename.'.fa') );
     $self->logger->info( "Final output filename: $path" );
@@ -181,6 +195,7 @@ sub md5_final_output_filename {
     my $directory = join( '/', ( $self->reference_store_dir,$self->hash_toplevel_dir_name, $md5));
     
     make_path($directory) if( ! -d $directory);
+    $self->reference_output_directory(abs_path($directory));
     my $path = join( '/', ( abs_path($directory), $md5 . '.fa') );
     $self->logger->info( "Final output filename MD5: $path" );
     return $path;
