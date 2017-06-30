@@ -15,15 +15,25 @@ has 'original_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'sequence_length'   => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'md5'               => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'basename'          => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'relative_directory'=> ( is => 'rw', isa => 'Maybe[Str]' );
+has 'production_directory'=> ( is => 'rw', isa => 'Maybe[Str]' );
+
+sub production_fasta
+{
+    my ($self) = @_;
+    return join('/',($self->production_directory,$self->basename.'.fa')),
+}
 
 sub to_hash {
     my ($self) = @_;
     my %reference_metadata = (
-        final_filename    => $self->final_filename,
-        original_filename => $self->original_filename,
-        sequence_length   => $self->sequence_length,
-        md5               => $self->md5,
-        basename          => $self->basename
+        final_filename     => $self->final_filename,
+        original_filename  => $self->original_filename,
+        sequence_length    => $self->sequence_length,
+        md5                => $self->md5,
+        basename           => $self->basename,
+        relative_directory => $self->relative_directory,
+        production_directory => $self->production_directory
         );
     return \%reference_metadata;
 }

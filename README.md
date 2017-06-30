@@ -6,3 +6,4 @@
 * bowtie2
 * samtools
 * Picard
+* rsync
