@@ -54,8 +54,6 @@ sub prepare_fasta_files
     return $self;
 }
 
-#
-#Format the files and deposit in long term archive (nfs) - save metadata to each directory
 #Copy the files to the working directory (lustre)
 #Index the files
 #Add to refs.index

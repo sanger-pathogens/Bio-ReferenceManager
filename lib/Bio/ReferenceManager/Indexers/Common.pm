@@ -11,6 +11,7 @@ package Bio::ReferenceManager::Indexers::Common;
 use Moose;
 use File::Basename;
 use File::Copy;
+use File::Path qw(make_path);
 use Cwd qw(abs_path getcwd);
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
@@ -124,7 +125,7 @@ sub run_indexing {
     my ( $self, $directory ) = @_;
 
     if ( @{ $self->files_to_be_created($directory) } > 0 ) {
-        mkdir $directory if ( !-d $directory );
+        make_path( $directory) if ( !-d $directory );
         $self->logger->warn( "Indexing in directory " . $directory );
 
         # Index in a separate subdirectory.

@@ -12,6 +12,7 @@ use Moose;
 use Cwd qw(abs_path getcwd);
 use File::Copy;
 use File::Basename;
+use File::Path qw(make_path);
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'fasta_file'      => ( is => 'rw', isa => 'Str',  required => 1 );
@@ -50,7 +51,7 @@ sub fasta_copy_location
 sub fasta_copy
 {
     my ($self) = @_;
-    mkdir $self->output_base_dir if(! -d $self->output_base_dir);
+    make_path($self->output_base_dir) if(! -d $self->output_base_dir);
     copy($self->fasta_file, $self->fasta_copy_location) if (! -e $self->fasta_copy_location);
 }
 
