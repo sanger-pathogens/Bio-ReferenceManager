@@ -68,7 +68,7 @@ sub _build_software_version {
 
 sub application_version_prefix {
     my ($self) = @_;
-    if($self->$self->software_version eq '')
+    if($self->software_version eq '')
     {
         return $self->software_name;
     }
