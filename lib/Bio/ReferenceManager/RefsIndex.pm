@@ -21,6 +21,8 @@ has 'reference_filename' => ( is => 'ro', isa => 'Str', required => 1 );
 sub reference_names_to_files {
     my ($self) = @_;
     my %reference_names_to_files;
+    
+    return \%reference_names_to_files unless(-e  $self->index_filename);
     open( my $index_file, $self->index_filename )
       or $self->logger->error( "Couldnt open reference index file for reading" . $self->index_filename );
     while (<$index_file>) {
@@ -40,6 +42,7 @@ sub reference_prefix {
 
 sub add_reference_to_index {
     my ($self)        = @_;
+    
     my $refs_to_files = $self->reference_names_to_files;
     my $refs_prefix   = $self->reference_prefix;
     if ( $refs_to_files->{$refs_prefix} ) {

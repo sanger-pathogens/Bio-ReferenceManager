@@ -11,6 +11,7 @@ Main class for working with references
 use Moose;
 use File::Basename;
 use Parallel::ForkManager;
+use File::Path qw(make_path);
 
 use Bio::ReferenceManager::Indexers;
 use Bio::ReferenceManager::PrepareFasta;
@@ -37,7 +38,7 @@ has 'overwrite_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'java_exec'       => ( is => 'rw', isa => 'Str',  default => 'java' );
 
 # for RefsIndex
-has 'index_filename' => ( is => 'ro', isa => 'Str', default => 'refs.index' );
+has 'index_filename'  => ( is => 'ro', isa => 'Str', default => 'refs.index' );
 
 sub run {
     my ($self) = @_;
@@ -54,15 +55,15 @@ sub run {
     $self->add_to_refs_index();
 
     $self->logger->info("Add references to the databases");
-    $self->add_to_databases();
+    #$self->add_to_databases();
 
+    return $self;
 }
 
 sub prepare_fasta_files {
     my ($self) = @_;
-my $pm = new Parallel::ForkManager( $self->processors );
+
     for my $fasta_file ( @{ $self->fasta_files } ) {
-        $pm->start and next;    # fork here
         my $obj = Bio::ReferenceManager::PrepareFasta->new(
             fasta_file          => $fasta_file,
             name_as_hash        => $self->name_as_hash,
@@ -74,25 +75,28 @@ my $pm = new Parallel::ForkManager( $self->processors );
         $obj->fix_file_and_save;
         $obj->write_metadata_to_json( $self->reference_metadata );
         push( @{ $self->references }, $obj->reference );
-$pm->finish;
+
     }
-    $pm->wait_all_children;
     return $self;
 }
 
 sub copy_files_to_production {
     my ($self) = @_;
+    
     my $pm = new Parallel::ForkManager( $self->processors );
     for my $reference ( @{ $self->references } ) {
-        $pm->start and next;    # fork here
         my ( $filename, $source_directory, $suffix ) = fileparse( $reference->final_filename, qr/\.[^.]*/ );
         my $destination_directory = join( '/', ( $self->production_reference_dir, $reference->relative_directory ) );
+        make_path($destination_directory);
         $reference->production_directory($destination_directory);
-
+        
+        ###### BEGIN Parallel #######
+        $pm->start and next;    # fork here
         my $cmd = "rsync -aq $source_directory/* $destination_directory";
         $self->logger->info("Copying files: $cmd");
         system($cmd);
         $pm->finish;
+        ###### END Parallel #######
     }
     $pm->wait_all_children;
     return $self;
@@ -103,16 +107,21 @@ sub index_files {
     my $pm = new Parallel::ForkManager( $self->processors );
 
     for my $reference ( @{ $self->references } ) {
+        my $output_base_dir = $reference->production_directory;
+        my $fasta_file = $reference->production_fasta;
+        
+        ###### BEGIN Parallel #######
         $pm->start and next;    # fork here
         my $indexer = Bio::ReferenceManager::Indexers->new(
-            output_base_dir => $reference->production_directory,
-            fasta_file      => $reference->production_fasta,
+            output_base_dir => $output_base_dir,
+            fasta_file      => $fasta_file,
             overwrite_files => $self->overwrite_files,
             java_exec       => $self->java_exec,
             logger          => $self->logger,
         );
         $indexer->create_index_files;
         $pm->finish;
+        ###### END Parallel #######
     }
     $pm->wait_all_children;
     return $self;

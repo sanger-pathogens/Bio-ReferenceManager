@@ -53,6 +53,7 @@ sub _build_software_version {
     $self->logger->info( "Version command for " . $self->software_name . ": " . $cmd );
     my $command_output = `$cmd`;
 
+    return '' if ( !defined( $command_output ) );
     return '' if ( !defined( $self->version_regex ) );
     my $regex = $self->version_regex;
 
