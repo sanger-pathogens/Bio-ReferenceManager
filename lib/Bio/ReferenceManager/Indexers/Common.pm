@@ -13,6 +13,7 @@ use File::Basename;
 use File::Copy;
 use File::Path qw(make_path);
 use Cwd qw(abs_path getcwd);
+use File::stat;
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'fasta_file'      => ( is => 'rw', isa => 'Str',      required => 1 );
@@ -53,7 +54,7 @@ sub _build_software_version {
     $self->logger->info( "Version command for " . $self->software_name . ": " . $cmd );
     my $command_output = `$cmd`;
 
-    return '' if ( !defined( $command_output ) );
+    return '' if ( !defined($command_output) );
     return '' if ( !defined( $self->version_regex ) );
     my $regex = $self->version_regex;
 
@@ -70,12 +71,10 @@ sub _build_software_version {
 
 sub application_version_prefix {
     my ($self) = @_;
-    if($self->software_version eq '')
-    {
+    if ( $self->software_version eq '' ) {
         return $self->software_name;
     }
-    else
-    {
+    else {
         return join( '_', ( $self->software_name, $self->software_version ) );
     }
 }
@@ -104,10 +103,23 @@ sub list_files_not_created {
     my ( $self, $directory ) = @_;
     my @files_not_created;
 
+    my $fstat = stat( $self->fasta_file );
+    my $fasta_file_mtime = $fstat->mtime();
+    
     for my $file ( @{ $self->expected_files($directory) } ) {
+
         if ( -e $file && -s $file ) {
 
-            # everything is okay
+            my $index_file_mtime = stat($file)->mtime;
+            if ( ( $fasta_file_mtime > $index_file_mtime ) ) {
+                $self->logger->warn( "The index file was created before the FASTA file, so regenerate " . $file );
+                push( @files_not_created, $file );
+            }
+            else
+            {
+                # everything was okay
+            }
+
         }
         else {
             push( @files_not_created, $file );
@@ -126,7 +138,7 @@ sub run_indexing {
     my ( $self, $directory ) = @_;
 
     if ( @{ $self->files_to_be_created($directory) } > 0 ) {
-        make_path( $directory) if ( !-d $directory );
+        make_path($directory) if ( !-d $directory );
         $self->logger->warn( "Indexing in directory " . $directory );
 
         # Index in a separate subdirectory.

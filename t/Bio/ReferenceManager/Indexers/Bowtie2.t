@@ -14,6 +14,7 @@ BEGIN {
 
 my $obj;
 
+system('echo "AAAAA" > abc.fa');
 ok( $obj = Bio::ReferenceManager::Indexers::Bowtie2->new( fasta_file => 'abc.fa' ), 'initialise with defaults' );
 is( $obj->_get_version_command, 'bowtie2-build --version 2>&1', 'get version command' );
 ok( my $software_version = $obj->software_version(), 'get software version' );
@@ -31,5 +32,6 @@ $obj->overwrite_files(1);
 is_deeply( $obj->files_to_be_created('.'), [ './abc.fa.1.bt2', './abc.fa.2.bt2', './abc.fa.3.bt2', './abc.fa.4.bt2','./abc.fa.rev.1.bt2','./abc.fa.rev.2.bt2' ], 'all files should be created if the overwrite flag is set' );
 
 unlink('abc.fa.1.bt2');
+unlink('AAAAA');
 
 done_testing();
