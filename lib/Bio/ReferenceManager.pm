@@ -43,6 +43,7 @@ has 'index_filename' => ( is => 'ro', isa => 'Str', default => 'refs.index' );
 
 # for databases
 has 'driver' => ( is => 'ro', isa => 'Str', default => 'mysql' );
+has 'dbh'    => ( is => 'ro', isa => 'Maybe[Bio::ReferenceManager::VRTrack::Schema]', required => 0 );
 
 sub run {
     my ($self) = @_;
@@ -59,8 +60,7 @@ sub run {
     $self->add_to_refs_index();
 
     $self->logger->info("Add references to the databases");
-
-    #$self->add_to_databases();
+    $self->add_to_databases();
 
     return $self;
 }
@@ -151,7 +151,6 @@ sub add_to_refs_index {
 # Must be run sequentially
 sub add_to_databases {
     my ($self) = @_;
-    my @reference_names = map { $_->basename } @{ $self->references };
 
     my $dbh;
     my $dm = Bio::ReferenceManager::VRTrack::DatabaseManager->new(
@@ -159,12 +158,19 @@ sub add_to_databases {
         logger => $self->logger
     );
 
-    for my $data_source ( @{ $self->data_sources } ) {
+    for my $data_source ( @{ $dm->data_sources } ) {
+        if(defined($self->dbh))
+        {
+             $dbh = $self->dbh;
+        }
+        else
+        {
+            $dbh = $dm->connect_to_database($data_source);
+        }
 
-        $dbh = $dm->connect_to_database($data_source);
         my $assemblies = Bio::ReferenceManager::VRTrack::Assemblies->new(
             dbh        => $dbh,
-            references => \@reference_names,
+            references => $self->references,
             logger     => $self->logger
         );
         $assemblies->insert_references_into_assembly_table;

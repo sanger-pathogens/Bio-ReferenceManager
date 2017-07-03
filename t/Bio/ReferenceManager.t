@@ -5,6 +5,7 @@ use Data::Dumper;
 use Test::Files;
 use File::Temp;
 use Cwd;
+use DBICx::TestDatabase;
 use Digest::MD5::File;
 use Log::Log4perl qw(:easy);
 
@@ -14,6 +15,9 @@ BEGIN {
     use Test::Most;
     use_ok('Bio::ReferenceManager');
 }
+
+my $dbh = DBICx::TestDatabase->new('Bio::ReferenceManager::VRTrack::Schema');
+$dbh->resultset('Assembly')->create({  name => 'abc',  reference_size => 123});
 
 my $tmp_dir_object = File::Temp->newdir( DIR => getcwd, CLEANUP => 1 );
 my $tmp_dirname = $tmp_dir_object->dirname();
@@ -26,6 +30,7 @@ ok(
         reference_store_dir      => $tmp_dirname . '/temprefs',
         production_reference_dir => $tmp_dirname . '/productiondir',
         name_as_hash => 0,
+        dbh => $dbh
     ),
     'initialise with valid file with original filename'
 );
@@ -43,7 +48,8 @@ ok(
         fasta_files              => ['t/data/ReferenceManager/valid_file.fa'],
         reference_store_dir      => $tmp_dirname . '/temprefs',
         production_reference_dir => $tmp_dirname . '/productiondir',
-        name_as_hash => 1
+        name_as_hash => 1,
+        dbh => $dbh
     ),
     'initialise with valid file and hashes as names'
 );

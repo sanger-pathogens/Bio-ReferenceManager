@@ -10,6 +10,7 @@ manage the database connections
 
 use Moose;
 use DBI;
+use Path::Class;
 use Bio::ReferenceManager::VRTrack::Schema;
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
@@ -62,7 +63,7 @@ sub _build_data_sources {
     my $dbname = file( $self->sqlite_dbname )->basename;
     $dbname =~ s/\..*$//;
 
-    push @sources, $dbname if $$self->sqlite_dbname;
+    push @sources, $dbname if $self->sqlite_dbname;
 
     return \@sources;
 }
@@ -74,7 +75,7 @@ sub get_dsn {
     my $dsn;
 
     if ( $self->driver eq 'mysql' ) {
-        $dsn = "DBI:mysql:host=".$self->host.";port=".$self->port.";database=" . $self->name;
+        $dsn = "DBI:mysql:host=".$self->host.";port=".$self->port.";database=" . $database_name;
     }
     elsif ( $self->driver eq 'SQLite' ) {
         $dsn = "dbi:SQLite:dbname=".$self->sqlite_dbname;
