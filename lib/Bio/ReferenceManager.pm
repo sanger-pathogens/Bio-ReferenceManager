@@ -17,6 +17,7 @@ use Bio::ReferenceManager::Indexers;
 use Bio::ReferenceManager::PrepareFasta;
 use Bio::ReferenceManager::RefsIndex;
 use Bio::ReferenceManager::VRTrack::Assemblies;
+use Bio::ReferenceManager::VRTrack::DatabaseManager;
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'fasta_files'              => ( is => 'ro', isa => 'ArrayRef[Str]', required => 1 );
@@ -38,7 +39,10 @@ has 'overwrite_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'java_exec'       => ( is => 'rw', isa => 'Str',  default => 'java' );
 
 # for RefsIndex
-has 'index_filename'  => ( is => 'ro', isa => 'Str', default => 'refs.index' );
+has 'index_filename' => ( is => 'ro', isa => 'Str', default => 'refs.index' );
+
+# for databases
+has 'driver' => ( is => 'ro', isa => 'Str', default => 'mysql' );
 
 sub run {
     my ($self) = @_;
@@ -55,6 +59,7 @@ sub run {
     $self->add_to_refs_index();
 
     $self->logger->info("Add references to the databases");
+
     #$self->add_to_databases();
 
     return $self;
@@ -82,14 +87,14 @@ sub prepare_fasta_files {
 
 sub copy_files_to_production {
     my ($self) = @_;
-    
+
     my $pm = new Parallel::ForkManager( $self->processors );
     for my $reference ( @{ $self->references } ) {
         my ( $filename, $source_directory, $suffix ) = fileparse( $reference->final_filename, qr/\.[^.]*/ );
         my $destination_directory = join( '/', ( $self->production_reference_dir, $reference->relative_directory ) );
         make_path($destination_directory);
         $reference->production_directory($destination_directory);
-        
+
         ###### BEGIN Parallel #######
         $pm->start and next;    # fork here
         my $cmd = "rsync -aq $source_directory/* $destination_directory";
@@ -108,8 +113,8 @@ sub index_files {
 
     for my $reference ( @{ $self->references } ) {
         my $output_base_dir = $reference->production_directory;
-        my $fasta_file = $reference->production_fasta;
-        
+        my $fasta_file      = $reference->production_fasta;
+
         ###### BEGIN Parallel #######
         $pm->start and next;    # fork here
         my $indexer = Bio::ReferenceManager::Indexers->new(
@@ -149,11 +154,22 @@ sub add_to_databases {
     my @reference_names = map { $_->basename } @{ $self->references };
 
     my $dbh;
+    my $dm = Bio::ReferenceManager::VRTrack::DatabaseManager->new(
+        driver => $self->driver,
+        logger => $self->logger
+    );
 
-    # XXX create a database connection;
-    # loop over each database
-    my $assemblies = Bio::ReferenceManager::VRTrack::Assemblies->new( dbh => $dbh, references => \@reference_names );
+    for my $data_source ( @{ $self->data_sources } ) {
 
+        $dbh = $dm->connect_to_database($data_source);
+        my $assemblies = Bio::ReferenceManager::VRTrack::Assemblies->new(
+            dbh        => $dbh,
+            references => \@reference_names,
+            logger     => $self->logger
+        );
+        $assemblies->insert_references_into_assembly_table;
+    }
+    return $self;
 }
 
 #Annotate bacteria

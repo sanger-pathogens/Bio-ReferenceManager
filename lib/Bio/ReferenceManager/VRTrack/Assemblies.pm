@@ -15,13 +15,6 @@ with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 has 'dbh'        => ( is => 'rw', isa => 'Bio::ReferenceManager::VRTrack::Schema',     required => 1 );
 has 'references' => ( is => 'rw', isa => 'ArrayRef[Bio::ReferenceManager::Reference]', required => 1 );
 
-# connect to DB instance but not to a specific database
-#sub _build_dbh {
-#    my ($self) = @_;
-#    my $dbh = Bio::ReferenceManager::VRTrack::Schema->connect( "DBI:mysql:host=" . $self->host . ":port=" . $self->port . ";",
-#        $self->user, $self->password, { 'RaiseError' => 1, 'PrintError' => 0 } );
-#}
-
 # Dont save
 sub reference_names {
     my ($self) = @_;
