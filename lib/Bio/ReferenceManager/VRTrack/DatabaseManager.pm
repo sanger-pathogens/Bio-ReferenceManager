@@ -52,10 +52,10 @@ sub _build_password {
 sub _build_data_sources {
     my ($self) = @_;
     
-    my $connection_params = { user => $self->user,  pass => $self->password, host => $self->host, port => $self->port };
+    my $connection_params = { user => $self->user,  password => $self->password, host => $self->host, port => $self->port };
 
     # ask the DBI for a list of sources
-    my @sources = grep s/^dbi:.*?://i, DBI->data_sources( $self->driver, $connection_params );
+    my @sources = grep s/^dbi:.*?:pathogen/pathogen/i, DBI->data_sources( $self->driver, $connection_params );
 
     # if we're using SQLite, "data_sources" won't return anything, so add
     # the name of the database itself
@@ -94,6 +94,7 @@ sub connect_to_database
     elsif (  $self->driver eq 'SQLite' ) {
       $schema = Bio::ReferenceManager::VRTrack::Schema->connect($self->get_dsn($database_name));
     }
+    return $schema;
 }
 
 no Moose;
