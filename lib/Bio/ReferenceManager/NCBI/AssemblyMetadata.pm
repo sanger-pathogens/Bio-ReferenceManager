@@ -20,7 +20,7 @@ has 'output_directory'    => ( is => 'rw', isa => 'Str', default => 'downloaded_
 has '_working_directory' => ( is => 'ro', isa => 'File::Temp::Dir', default => sub { File::Temp->newdir( DIR => getcwd, CLEANUP => 1 ); } );
 has '_working_directory_name' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build__working_directory_name' );
 
-has '_assembly_summary_filename' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build_assembly_summary_filename' );
+has 'assembly_summary_filename' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build_assembly_summary_filename' );
 
 sub download_all_complete_genomes {
     my ($self) = @_;
@@ -57,13 +57,12 @@ sub extract_complete_genomes {
     while (<$fh_in>) {
         chomp();
         my $line = $_;
-
         my @elements = split( /\t/, $line );
-        if ( $elements[11] eq "Complete Genome" && $elements[12] eq "latest" ) {
+        if ( $elements[11] eq "Complete Genome" && $elements[10] eq "latest" ) {
             my $a = Bio::ReferenceManager::NCBI::RefSeqAssembly->new(
-                species       => $elements[9],
-                accession     => $elements[1],
-                ftp_directory => $elements[20]
+                species       => $elements[7],
+                accession     => $elements[0],
+                ftp_directory => $elements[19]
             );
             push( @refseqassemblies, $a );
         }

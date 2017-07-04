@@ -22,5 +22,4 @@ is($obj->downloaded_filename, 'GCF_001865555.1_ASM186555v1_genomic.fna.gz', 'Dow
 is($obj->download_url, 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/001/865/555/GCF_001865555.1_ASM186555v1/GCF_001865555.1_ASM186555v1_genomic.fna.gz', 'Download url');
 is($obj->normalised_species_name, 'Campylobacter_coli_GCF_001865555_1', 'normalised species name');
 
-
 done_testing();
