@@ -50,6 +50,7 @@ sub references_needing_to_be_added {
         }
     };
     if ($@) {
+        # Not a tracking database
         return [];
     }
 
