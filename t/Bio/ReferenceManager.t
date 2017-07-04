@@ -30,7 +30,8 @@ ok(
         reference_store_dir      => $tmp_dirname . '/temprefs',
         production_reference_dir => $tmp_dirname . '/productiondir',
         name_as_hash             => 0,
-        dbh                      => $dbh
+        dbh                      => $dbh,
+        driver => 'SQLite'
     ),
     'initialise with valid file with original filename'
 );
