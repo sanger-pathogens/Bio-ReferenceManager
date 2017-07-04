@@ -51,8 +51,8 @@ sub _build_password {
 
 sub _build_data_sources {
     my ($self) = @_;
-    
-    my $connection_params = { user => $self->user,  password => $self->password, host => $self->host, port => $self->port };
+
+    my $connection_params = { user => $self->user, password => $self->password, host => $self->host, port => $self->port };
 
     # ask the DBI for a list of sources
     my @sources = grep s/^dbi:.*?:pathogen/pathogen/i, DBI->data_sources( $self->driver, $connection_params );
@@ -68,31 +68,29 @@ sub _build_data_sources {
     return \@sources;
 }
 
-
 sub get_dsn {
     my ( $self, $database_name ) = @_;
 
     my $dsn;
 
     if ( $self->driver eq 'mysql' ) {
-        $dsn = "DBI:mysql:host=".$self->host.";port=".$self->port.";database=" . $database_name;
+        $dsn = "DBI:mysql:host=" . $self->host . ";port=" . $self->port . ";database=" . $database_name;
     }
     elsif ( $self->driver eq 'SQLite' ) {
-        $dsn = "dbi:SQLite:dbname=".$self->sqlite_dbname;
+        $dsn = "dbi:SQLite:dbname=" . $self->sqlite_dbname;
     }
 
     return $dsn;
 }
 
-sub connect_to_database
-{
-    my ( $self,$database_name) = @_;
+sub connect_to_database {
+    my ( $self, $database_name ) = @_;
     my $schema;
-    if (  $self->driver eq 'mysql' ) {
-      $schema = Bio::ReferenceManager::VRTrack::Schema->connect($self->get_dsn($database_name), $self->user, $self->password);
+    if ( $self->driver eq 'mysql' ) {
+        $schema = Bio::ReferenceManager::VRTrack::Schema->connect( $self->get_dsn($database_name), $self->user, $self->password );
     }
-    elsif (  $self->driver eq 'SQLite' ) {
-      $schema = Bio::ReferenceManager::VRTrack::Schema->connect($self->get_dsn($database_name));
+    elsif ( $self->driver eq 'SQLite' ) {
+        $schema = Bio::ReferenceManager::VRTrack::Schema->connect( $self->get_dsn($database_name) );
     }
     return $schema;
 }

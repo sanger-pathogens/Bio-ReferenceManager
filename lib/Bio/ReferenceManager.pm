@@ -140,7 +140,7 @@ sub add_to_refs_index {
     for my $reference ( @{ $self->references } ) {
         my $refsindex = Bio::ReferenceManager::RefsIndex->new(
             index_filename     => $refs_index_filename,
-            reference_filename => $reference->production_directory,
+            reference_filename => $reference->production_fasta,
             logger             => $self->logger,
         );
         $refsindex->add_reference_to_index;
