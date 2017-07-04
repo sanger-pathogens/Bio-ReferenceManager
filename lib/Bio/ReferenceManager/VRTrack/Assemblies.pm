@@ -28,7 +28,8 @@ sub reference_names {
 sub search_reference_names {
     my ($self) = @_;
     my @ref_names = keys $self->reference_names();
-    my $assemblies = $self->dbh->resultset('Assembly')->search( { name => \@ref_names } );
+    my $assemblies;
+    eval { $assemblies = $self->dbh->resultset('Assembly')->search( { name => \@ref_names } ); };
     return $assemblies;
 }
 
@@ -40,10 +41,16 @@ sub references_needing_to_be_added {
 
     # Go through each assembly and delete them from the reference name list.
     my $search_reference_names_results = $self->search_reference_names;
-    while ( my $assembly = $search_reference_names_results->next ) {
-        if ( defined( $ref_names{ $assembly->name } ) ) {
-            delete( $ref_names{ $assembly->name } );
+    return [] if ( !defined($search_reference_names_results) );
+    eval {
+        while ( my $assembly = $search_reference_names_results->next ) {
+            if ( defined( $ref_names{ $assembly->name } ) ) {
+                delete( $ref_names{ $assembly->name } );
+            }
         }
+    };
+    if ($@) {
+        return [];
     }
 
     #should now be left with a list of references to be added
@@ -57,8 +64,11 @@ sub insert_references_into_assembly_table {
 
     my $number_inserted = 0;
     for my $reference ( @{ $self->references_needing_to_be_added } ) {
-        $self->dbh->resultset('Assembly')->create( { name => $reference->basename, reference_size => $reference->sequence_length } );
-        $number_inserted++;
+
+        eval {
+            $self->dbh->resultset('Assembly')->create( { name => $reference->basename, reference_size => $reference->sequence_length } );
+            $number_inserted++;
+        };
     }
     return $number_inserted;
 }

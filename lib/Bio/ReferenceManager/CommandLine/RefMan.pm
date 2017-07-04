@@ -69,9 +69,9 @@ sub BUILD {
     }
 
     $self->verbose($verbose)                                   if ( defined($verbose) );
-    $self->reference_store_dir($reference_store_dir)           if ( defined($reference_store_dir) );
+    $self->reference_store_dir(abs_path($reference_store_dir))           if ( defined($reference_store_dir) );
     $self->reference_metadata($reference_metadata)             if ( defined($reference_metadata) );
-    $self->production_reference_dir($production_reference_dir) if ( defined($production_reference_dir) );
+    $self->production_reference_dir(abs_path($production_reference_dir)) if ( defined($production_reference_dir) );
     $self->processors($processors)                             if ( defined($processors) );
     $self->name_as_hash($name_as_hash)                         if ( defined($name_as_hash) );
     $self->dos2unix_exec($dos2unix_exec)                       if ( defined($dos2unix_exec) );

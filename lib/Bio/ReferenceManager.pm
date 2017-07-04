@@ -114,7 +114,7 @@ sub index_files {
     for my $reference ( @{ $self->references } ) {
         my $output_base_dir = $reference->production_directory;
         my $fasta_file      = $reference->production_fasta;
-
+        
         ###### BEGIN Parallel #######
         $pm->start and next;    # fork here
         my $indexer = Bio::ReferenceManager::Indexers->new(
