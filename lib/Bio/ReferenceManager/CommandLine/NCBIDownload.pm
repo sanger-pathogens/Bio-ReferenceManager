@@ -1,4 +1,4 @@
-package Bio::ReferenceManager::CommandLine::RefManNCBIDownload;
+package Bio::ReferenceManager::CommandLine::NCBIDownload;
 
 # ABSTRACT: download references from NCBI
 
@@ -34,15 +34,15 @@ sub BUILD {
 
     my (
         $url,              $downloaded_filename, $download_everything, $dont_redownload_assembly_stats,
-        $index_filename,   $verbose,             $assembly_type,     $assembly_latest,
-        $output_directory, $overwrite_files,     $java_exec,         $help
+        $index_filename,   $verbose,             $assembly_type,       $assembly_latest,
+        $output_directory, $overwrite_files,     $java_exec,           $help
     );
 
     GetOptionsFromArray(
         $self->args,
         'u|url=s'                        => \$url,
         'downloaded_filename=s'          => \$downloaded_filename,
-        'e|download_everything'              => \$download_everything,
+        'e|download_everything'          => \$download_everything,
         'dont_redownload_assembly_stats' => \$dont_redownload_assembly_stats,
         'i|index_filename=s'             => \$index_filename,
         'assembly_type=s'                => \$assembly_type,
@@ -59,14 +59,14 @@ sub BUILD {
 
     $self->url($url)                                                       if ( defined($url) );
     $self->downloaded_filename($downloaded_filename)                       if ( defined($downloaded_filename) );
-    $self->download_only_new(0)                           if ( defined($download_everything) );
+    $self->download_only_new(0)                                            if ( defined($download_everything) );
     $self->dont_redownload_assembly_stats($dont_redownload_assembly_stats) if ( defined($dont_redownload_assembly_stats) );
     $self->index_filename($index_filename)                                 if ( defined($index_filename) );
     $self->assembly_type($assembly_type)                                   if ( defined($assembly_type) );
     $self->assembly_latest($assembly_latest)                               if ( defined($assembly_latest) );
     $self->verbose($verbose)                                               if ( defined($verbose) );
     $self->help($help)                                                     if ( defined($help) );
-    $self->output_directory( abs_path( $self->output_directory ) );
+    $self->output_directory( abs_path( $self->output_directory ) )         if ( defined($output_directory) );
 
 }
 
@@ -107,17 +107,18 @@ sub usage_text {
 Usage: refman_ncbi_download [options]
 By default it will download all new complete genomes from RefSeq
 
-Options: -u STR   NCBI assembly stats table [ftp://ftp.ncbi.nlm.nih.gov/.../assembly_summary.txt]
-         -i STR   Top level refs index filename [/lustre/scratch118/.../refs.index]
-         -e       Download all genomes, not just new ones [FALSE]
-         -o STR   output directory [references]
-         -v       verbose output to STDOUT
-         -h       this help message
+Options: 
+  -u STR NCBI assembly stats table [ftp://ftp.ncbi.nlm.nih.gov/.../assembly_summary.txt]
+  -i STR Top level refs index filename [/lustre/scratch118/.../refs.index]
+  -e     Download all genomes, not just new ones [FALSE]
+  -o STR output directory [references]
+  -v     verbose output to STDOUT
+  -h     this help message
 
 Advanced options:
-         --downloaded_filename            STR What we call the downloaded assembly stats file [assembly_summary.txt]
-         --dont_redownload_assembly_stats STR Provide an assembly summary file locally [FALSE]
-         --assembly_type                  STR string to filter assembly_summary by [Complete Genome]
+  --downloaded_filename            STR What we call the downloaded assembly stats file [assembly_summary.txt]
+  --dont_redownload_assembly_stats STR Provide an assembly summary file locally [FALSE]
+  --assembly_type                  STR string to filter assembly_summary by [Complete Genome]
          
 USAGE
 }
