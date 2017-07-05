@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+
+package Bio::ReferenceManager::Main::RefManNCBIDownload;
+
+# ABSTRACT: Download references from NCBI
+# PODNAME:  refman_ncbi_download
+
+=head1 SYNOPSIS
+
+Download references from NCBI
+
+=cut
+
+use Cwd qw(abs_path); 
+BEGIN { unshift( @INC, abs_path('./lib') ) }
+BEGIN { unshift( @INC, abs_path('./t/lib') ) }
+use Bio::ReferenceManager::CommandLine::RefManNCBIDownload;
+
+Bio::ReferenceManager::CommandLine::RefManNCBIDownload->new(args => \@ARGV, script_name => $0)->run;

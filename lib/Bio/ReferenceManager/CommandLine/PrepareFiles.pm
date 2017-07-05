@@ -53,7 +53,7 @@ sub BUILD {
     $self->processors($processors)           if ( defined($processors) );
     $self->output_directory($output_directory) if(defined($output_directory));
     $self->references_metadata($references_metadata) if(defined($references_metadata));
-
+    
     if ( @{ $self->args } < 1 ) {
         $self->logger->error("Error: You need to provide at least 1 file");
         die $self->usage_text;

@@ -20,11 +20,28 @@ has 'output_directory'               => ( is => 'rw', isa => 'Str',  default => 
 has 'download_only_new'              => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'dont_redownload_assembly_stats' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'index_filename'                 => ( is => 'ro', isa => 'Str',  default => 'refs.index' );
+has 'assembly_type'                  => ( is => 'ro', isa => 'Str',  default => "Complete Genome" );
+has 'assembly_latest'                => ( is => 'ro', isa => 'Str',  default => "latest" );
 
-has '_working_directory' => ( is => 'ro', isa => 'File::Temp::Dir', default => sub { File::Temp->newdir( DIR => getcwd, CLEANUP => 1 ); } );
-has '_working_directory_name' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build__working_directory_name' );
+has '_working_directory' => (
+    is      => 'ro',
+    isa     => 'File::Temp::Dir',
+    default => sub { File::Temp->newdir( DIR => getcwd, CLEANUP => 1 ); }
+);
 
-has 'assembly_summary_filename' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build_assembly_summary_filename' );
+has '_working_directory_name' => (
+    is      => 'ro',
+    isa     => 'Str',
+    lazy    => 1,
+    builder => '_build__working_directory_name'
+);
+
+has 'assembly_summary_filename' => (
+    is      => 'ro',
+    isa     => 'Str',
+    lazy    => 1,
+    builder => '_build_assembly_summary_filename'
+);
 
 sub download_genomes {
     my ($self) = @_;
@@ -106,8 +123,8 @@ sub extract_complete_genomes {
         chomp();
         my $line = $_;
         my @elements = split( /\t/, $line );
-        next if(@elements < 19);
-        if ( $elements[11] eq "Complete Genome" && $elements[10] eq "latest" ) {
+        next if ( @elements < 19 );
+        if ( $elements[11] eq $self->assembly_type && $elements[10] eq $self->assembly_latest ) {
             my $a = Bio::ReferenceManager::NCBI::RefSeqAssembly->new(
                 species       => $elements[7],
                 strain        => $elements[8],
