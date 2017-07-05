@@ -12,25 +12,73 @@ use Moose;
 use File::Temp;
 use Cwd;
 use Bio::ReferenceManager::NCBI::RefSeqAssembly;
+use Bio::ReferenceManager::RefsIndex;
 
 has 'url' => ( is => 'rw', isa => 'Str', default => 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' );
-has 'downloaded_filename' => ( is => 'rw', isa => 'Str', default => 'assembly_summary.txt' );
-has 'output_directory'    => ( is => 'rw', isa => 'Str', default => 'downloaded_assemblies' );
+has 'downloaded_filename'            => ( is => 'rw', isa => 'Str',  default => 'assembly_summary.txt' );
+has 'output_directory'               => ( is => 'rw', isa => 'Str',  default => 'downloaded_assemblies' );
+has 'download_only_new'              => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'dont_redownload_assembly_stats' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'index_filename'                 => ( is => 'ro', isa => 'Str',  default => 'refs.index' );
 
 has '_working_directory' => ( is => 'ro', isa => 'File::Temp::Dir', default => sub { File::Temp->newdir( DIR => getcwd, CLEANUP => 1 ); } );
 has '_working_directory_name' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build__working_directory_name' );
 
 has 'assembly_summary_filename' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build_assembly_summary_filename' );
 
+sub download_genomes {
+    my ($self) = @_;
+    if ( $self->download_only_new ) {
+        $self->download_only_new_complete_genomes;
+    }
+    else {
+        $self->download_all_complete_genomes;
+    }
+    return $self;
+}
+
 sub download_all_complete_genomes {
     my ($self) = @_;
-    $self->download_assembly_summary;
+    unless ( $self->dont_redownload_assembly_stats && ( -e $self->assembly_summary_filename ) ) {
+        $self->download_assembly_summary;
+    }
     my $refseq_assemblies = $self->extract_complete_genomes;
 
     for my $assembly ( @{$refseq_assemblies} ) {
         $self->download_assembly($assembly);
     }
     return $self;
+}
+
+sub download_only_new_complete_genomes {
+    my ($self) = @_;
+
+    for my $assembly ( @{ $self->new_genomes } ) {
+        $self->download_assembly($assembly);
+    }
+    return $self;
+}
+
+sub new_genomes {
+    my ($self) = @_;
+    my @genomes_not_in_refs_index;
+
+    my $refs_index = Bio::ReferenceManager::RefsIndex->new( index_filename => $self->index_filename );
+    my $reference_names_to_files = $refs_index->reference_names_to_files;
+
+    unless ( $self->dont_redownload_assembly_stats && ( -e $self->assembly_summary_filename ) ) {
+        $self->download_assembly_summary;
+    }
+
+    my $refseq_assemblies = $self->extract_complete_genomes;
+
+    for my $assembly ( @{$refseq_assemblies} ) {
+        if ( !defined( $reference_names_to_files->{ $assembly->normalised_species_name } ) ) {
+            push( @genomes_not_in_refs_index, $assembly );
+        }
+    }
+    return \@genomes_not_in_refs_index;
+
 }
 
 sub _build__working_directory_name {
@@ -58,9 +106,11 @@ sub extract_complete_genomes {
         chomp();
         my $line = $_;
         my @elements = split( /\t/, $line );
+        next if(@elements < 19);
         if ( $elements[11] eq "Complete Genome" && $elements[10] eq "latest" ) {
             my $a = Bio::ReferenceManager::NCBI::RefSeqAssembly->new(
                 species       => $elements[7],
+                strain        => $elements[8],
                 accession     => $elements[0],
                 ftp_directory => $elements[19]
             );
@@ -78,7 +128,7 @@ sub download_assembly {
 
     system( "wget -O " . $downloaded_filename . " " . $refseq_assembly->download_url . " > /dev/null 2>&1" );
     system( "gunzip " . $downloaded_filename );
-    system( "mv $downloaded_filename $output_filename");
+    system("mv $downloaded_filename $output_filename");
     return $self;
 }
 

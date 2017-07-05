@@ -11,6 +11,7 @@ represents the metadata for a refseq assembly
 use Moose;
 
 has 'species'       => ( is => 'rw', isa => 'Str', required => 1 );
+has 'strain'       => ( is => 'rw', isa => 'Maybe[Str]', default => '' );
 has 'accession'     => ( is => 'rw', isa => 'Str', required => 1 );
 has 'ftp_directory' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'suffix'        => ( is => 'rw', isa => 'Str', default  => '_genomic.fna.gz' );
@@ -32,9 +33,14 @@ sub normalised_species_name {
     my ($self) = @_;
     my $species = $self->species;
     $species =~ s!\W!_!gi;
+    
     my $accession = $self->accession;
     $accession =~ s!\W!_!gi;
-    return $species . '_' . $accession;
+    
+    my $strain = $self->strain || '';
+    $strain =~ s!\W!_!gi;
+    
+    return join('_',($species, $strain, $accession));
 }
 
 no Moose;

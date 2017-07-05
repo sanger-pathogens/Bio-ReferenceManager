@@ -13,7 +13,7 @@ use File::Basename;
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'index_filename'     => ( is => 'ro', isa => 'Str', default  => 'refs.index' );
-has 'reference_filename' => ( is => 'ro', isa => 'Str', required => 1 );
+has 'reference_filename' => ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
 
 #It reads the file each time to check for duplicates, then appends.
 #There is a slight chance of duplicates but that wont do much harm.
