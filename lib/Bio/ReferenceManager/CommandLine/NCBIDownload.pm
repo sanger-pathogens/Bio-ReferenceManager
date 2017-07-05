@@ -64,7 +64,6 @@ sub BUILD {
     $self->index_filename($index_filename)                                 if ( defined($index_filename) );
     $self->assembly_type($assembly_type)                                   if ( defined($assembly_type) );
     $self->assembly_latest($assembly_latest)                               if ( defined($assembly_latest) );
-    $self->verbose($verbose)                                               if ( defined($verbose) );
     $self->help($help)                                                     if ( defined($help) );
     $self->output_directory( abs_path( $self->output_directory ) )         if ( defined($output_directory) );
 
@@ -97,6 +96,7 @@ sub run {
         assembly_latest                => $self->assembly_latest,
         logger                         => $self->logger,
     );
+    $obj->download_genomes;
 
 }
 

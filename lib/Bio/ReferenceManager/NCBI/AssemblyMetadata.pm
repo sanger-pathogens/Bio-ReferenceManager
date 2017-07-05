@@ -166,9 +166,7 @@ sub download_assembly {
     system( $downloading_command );
     
     $self->logger->info( "unzip command "."gunzip " . $downloaded_filename );
-    system( "gunzip " . $downloaded_filename );
-    $self->logger->info( "moving command mv $downloaded_filename $output_filename" );
-    system("mv $downloaded_filename $output_filename");
+    system( "gunzip -c  $downloaded_filename > $output_filename" );
     return $self;
 }
 
