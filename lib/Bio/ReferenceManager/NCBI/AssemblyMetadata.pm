@@ -11,6 +11,7 @@ package Bio::ReferenceManager::NCBI::AssemblyMetadata;
 use Moose;
 use File::Temp;
 use Cwd;
+use Parallel::ForkManager;
 use Bio::ReferenceManager::NCBI::RefSeqAssembly;
 use Bio::ReferenceManager::RefsIndex;
 with 'Bio::ReferenceManager::CommandLine::LoggingRole';
@@ -23,6 +24,7 @@ has 'dont_redownload_assembly_stats' => ( is => 'rw', isa => 'Bool', default => 
 has 'index_filename'                 => ( is => 'ro', isa => 'Str',  default => 'refs.index' );
 has 'assembly_type'                  => ( is => 'ro', isa => 'Str',  default => "Complete Genome" );
 has 'assembly_latest'                => ( is => 'ro', isa => 'Str',  default => "latest" );
+has 'processors'                     => ( is => 'rw', isa => 'Int',  default => 1 );
 
 has '_working_directory' => (
     is      => 'ro',
@@ -67,20 +69,27 @@ sub download_all_complete_genomes {
     $self->logger->info("Getting all the urls for assemblies to download");
     my $refseq_assemblies = $self->extract_complete_genomes;
 
+    my $pm = new Parallel::ForkManager( $self->processors );
     for my $assembly ( @{$refseq_assemblies} ) {
+        $pm->start and next;    # fork here
         $self->logger->info( "Downloading assembly with accession " . $assembly->accession );
         $self->download_assembly($assembly);
+        $pm->finish;
     }
+    $pm->wait_all_children;
     return $self;
 }
 
 sub download_only_new_complete_genomes {
     my ($self) = @_;
-
+    my $pm = new Parallel::ForkManager( $self->processors );
     for my $assembly ( @{ $self->new_genomes } ) {
+        $pm->start and next;    # fork here
         $self->logger->info( "Downloading assembly with accession " . $assembly->accession );
         $self->download_assembly($assembly);
+        $pm->finish;
     }
+    $pm->wait_all_children;
     return $self;
 }
 
