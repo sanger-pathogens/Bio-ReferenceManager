@@ -28,15 +28,13 @@ has 'dont_redownload_assembly_stats' => ( is => 'rw', isa => 'Bool', default => 
 has 'index_filename'  => ( is => 'rw', isa => 'Str', default => '/lustre/scratch118/infgen/pathogen/pathpipe/refs/refs.index' );
 has 'assembly_type'   => ( is => 'rw', isa => 'Str', default => "Complete Genome" );
 has 'assembly_latest' => ( is => 'rw', isa => 'Str', default => "latest" );
+has 'processors'      => ( is => 'rw', isa => 'Int', default => 1 );
 
 sub BUILD {
     my ($self) = @_;
 
-    my (
-        $url,              $downloaded_filename, $download_everything, $dont_redownload_assembly_stats,
-        $index_filename,   $verbose,             $assembly_type,       $assembly_latest,
-        $output_directory, $overwrite_files,     $java_exec,           $help
-    );
+    my ( $url, $downloaded_filename, $download_everything, $dont_redownload_assembly_stats,
+        $index_filename, $verbose, $assembly_type, $assembly_latest, $output_directory, $overwrite_files, $java_exec, $help, $processors );
 
     GetOptionsFromArray(
         $self->args,
@@ -49,6 +47,7 @@ sub BUILD {
         'assembly_latest=s'              => \$assembly_latest,
         'v|verbose'                      => \$verbose,
         'o|output_directory=s'           => \$output_directory,
+        'p|processors=i'                 => \$processors,
         'h|help'                         => \$help,
     );
 
@@ -65,6 +64,7 @@ sub BUILD {
     $self->assembly_type($assembly_type)                                   if ( defined($assembly_type) );
     $self->assembly_latest($assembly_latest)                               if ( defined($assembly_latest) );
     $self->help($help)                                                     if ( defined($help) );
+    $self->processors($processors)                                         if ( defined($processors) );
     $self->output_directory( abs_path( $self->output_directory ) )         if ( defined($output_directory) );
 
 }
@@ -95,6 +95,7 @@ sub run {
         assembly_type                  => $self->assembly_type,
         assembly_latest                => $self->assembly_latest,
         logger                         => $self->logger,
+        processors => $self->processors,
     );
     $obj->download_genomes;
 
@@ -111,6 +112,7 @@ Options:
   -u STR NCBI assembly stats table [ftp://ftp.ncbi.nlm.nih.gov/.../assembly_summary.txt]
   -i STR Top level refs index filename [/lustre/scratch118/.../refs.index]
   -e     Download all genomes, not just new ones [FALSE]
+  -p INT number of processors [1]
   -o STR output directory [downloaded_assemblies]
   -v     verbose output to STDOUT
   -h     this help message
