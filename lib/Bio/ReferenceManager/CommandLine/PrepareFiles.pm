@@ -10,32 +10,23 @@ prepare input files
 
 use Moose;
 use Getopt::Long qw(GetOptionsFromArray);
-use Log::Log4perl qw(:easy);
 use Bio::ReferenceManager::PrepareFasta;
 use Cwd qw(abs_path);
 use File::Path qw(make_path);
 use JSON;
 use File::Slurper 'write_text';
-
+with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
 has 'args'        => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name' => ( is => 'ro', isa => 'Str',      required => 1 );
 has 'help'        => ( is => 'rw', isa => 'Bool',     default  => 0 );
-
+has 'verbose'      => ( is => 'rw', isa  => 'Bool', default => 0 );
 has 'input_files'  => ( is => 'rw', isa  => 'ArrayRef', default => sub { [] } );
 has 'name_as_hash' => ( is => 'rw', isa  => 'Bool', default => 1 );
 has 'processors'   => ( is => 'rw', isa  => 'Int', default => 1 );
 has 'references_metadata'   => ( is => 'rw', isa  => 'Str', default => 'references_metadata' );
-has 'verbose'      => ( is => 'rw', isa  => 'Bool', default => 0 );
 has 'output_directory' => ( is => 'rw', isa  => 'Str', default => 'references' );
-has 'logger'       => ( is => 'ro', lazy => 1, builder => '_build_logger' );
 
-sub _build_logger {
-    my ($self) = @_;
-    Log::Log4perl->easy_init($ERROR);
-    my $logger = get_logger();
-    return $logger;
-}
 
 sub BUILD {
     my ($self) = @_;
@@ -44,11 +35,11 @@ sub BUILD {
 
     GetOptionsFromArray(
         $self->args,
-        'd|dont_use_hashes=s' => \$dont_use_hashes,
+        'd|dont_use_hashes' => \$dont_use_hashes,
         'r|references_metadata=s' => \$references_metadata,
         'p|processors=i'      => \$processors,
         'v|verbose'           => \$verbose,
-        'o|output_directory'  => \$output_directory,
+        'o|output_directory=s'  => \$output_directory,
         'h|help'              => \$help,
     );
 
@@ -62,7 +53,7 @@ sub BUILD {
     $self->processors($processors)           if ( defined($processors) );
     $self->output_directory($output_directory) if(defined($output_directory));
     $self->references_metadata($references_metadata) if(defined($references_metadata));
-
+    
     if ( @{ $self->args } < 1 ) {
         $self->logger->error("Error: You need to provide at least 1 file");
         die $self->usage_text;
@@ -102,7 +93,8 @@ sub run {
             fasta_file   => $fasta_file,
             verbose      => $self->verbose,
             name_as_hash => $self->name_as_hash,
-            reference_store_dir => $self->output_directory
+            reference_store_dir => $self->output_directory,
+            logger => $self->logger,
         );
         $obj->fix_file_and_save;
         push(@references, $obj->reference);
@@ -115,7 +107,7 @@ sub usage_text {
     my ($self) = @_;
 
     return <<USAGE;
-Usage: prepare_reference_files [options]
+Usage: refman_prepare_reference_files [options]
 Take in references and prepare them for adding to the reference tracking system.
 
 Options: -d       dont use hashes for filenames [False]

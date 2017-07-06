@@ -3,7 +3,7 @@
 package Bio::ReferenceManager::Main::PrepareFiles;
 
 # ABSTRACT: prepare reference files
-# PODNAME:  prepare reference files
+# PODNAME:  refman_prepare_reference_files
 
 =head1 SYNOPSIS
 

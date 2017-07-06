@@ -13,14 +13,22 @@ use File::Copy;
 use File::Temp;
 use File::Basename;
 use Cwd qw(abs_path getcwd);
+use File::Path qw(make_path);
 use Bio::SeqIO;
+use JSON;
+use File::Slurper 'write_text';
 use Digest::MD5::File qw(file_md5_hex);
 use Bio::ReferenceManager::Reference;
+with 'Bio::ReferenceManager::CommandLine::LoggingRole';
 
-has 'fasta_file'          => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'reference_store_dir' => ( is => 'rw', isa => 'Str',  required => 1 );
-has 'verbose'             => ( is => 'rw', isa => 'Bool', default  => 0 );
-has 'name_as_hash'        => ( is => 'rw', isa => 'Bool', default  => 1 );
+has 'fasta_file'             => ( is => 'ro', isa => 'Str',  required => 1 );
+has 'reference_store_dir'    => ( is => 'rw', isa => 'Str',  required => 1 );
+has 'name_as_hash'           => ( is => 'rw', isa => 'Bool', default  => 1 );
+has 'hash_toplevel_dir_name' => ( is => 'rw', isa => 'Str',  default  => 'hash' );
+has 'overwrite_files'        => ( is => 'rw', isa => 'Bool', default  => 0 );
+
+has 'reference_output_directory' => ( is => 'rw', isa => 'Maybe[Str]', required => 0 );
+has 'relative_directory'         => ( is => 'rw', isa => 'Maybe[Str]', required => 0 );
 
 has 'dos2unix_exec' => ( is => 'rw', isa => 'Str', default => 'dos2unix' );
 has 'fastaq_exec'   => ( is => 'rw', isa => 'Str', default => 'fastaq' );
@@ -37,32 +45,47 @@ sub _build__tmp_dir {
 
 sub fix_file_and_save {
     my ($self) = @_;
-    $self->_run_dos2unix();
-    $self->is_valid_fasta( $self->_dos2unix_output_filename );
-    $self->_run_acgtn_only();
-    $self->_fix_sequence_names();
-    $self->_run_sort_by_name();
 
-    my $md5 = file_md5_hex( $self->_sort_by_name_output_filename );
-    print $md5. "\n" if ( $self->verbose );
-    
-    my $final_outputname;
-    if($self->name_as_hash)
-    {
-        $final_outputname = $self->md5_final_output_filename($md5);
-    }
-    else
-    {
-        $final_outputname =  $self->basename_final_output_filename();
-    }
-    
-    print "Copy ".$self->_sort_by_name_output_filename."\t".$final_outputname ."\n" if $self->verbose;
-    copy( $self->_sort_by_name_output_filename, $final_outputname );
+    my $final_outputname = $self->basename_final_output_filename();
+    my $md5;
 
-    $self->reference->final_filename($final_outputname);    
-    $self->reference->original_filename($self->fasta_file);
+    if ( $self->name_as_hash || $self->overwrite_files || !( -e $final_outputname ) ) {
+        $self->logger->info("Regenerating FASTA file");
+        $self->_run_dos2unix();
+        $self->is_valid_fasta( $self->_dos2unix_output_filename );
+        $self->_run_acgtn_only();
+        $self->_fix_sequence_names();
+        $self->_run_sort_by_name();
+        
+        $md5 = file_md5_hex( $self->_sort_by_name_output_filename );
+        $self->logger->info( "MD5 for " . $self->fasta_file . ": $md5" );
+        
+        if ( $self->name_as_hash ) {
+            $final_outputname = $self->md5_final_output_filename($md5); 
+        }
+
+        $self->logger->info( "Copy file " . $self->_sort_by_name_output_filename . " to " . $final_outputname );
+        copy( $self->_sort_by_name_output_filename, $final_outputname );
+        
+    }
+    else {
+        $self->logger->info("Not regenerating FASTA file since its there already");
+        $md5 = file_md5_hex( $final_outputname ); 
+    }
+
+    $self->reference->final_filename($final_outputname);
+    $self->reference->original_filename( $self->fasta_file );
     $self->reference->md5($md5);
-    $self->reference->basename($final_outputname, qr/\.[^.]*/);
+    $self->reference->relative_directory( $self->relative_directory );
+    my ( $filename, $dirs, $suffix ) = fileparse( $final_outputname, qr/\.[^.]*/ );
+    $self->reference->basename( $filename, qr/\.[^.]*/ );
+}
+
+sub write_metadata_to_json {
+    my ( $self, $metadata_filename ) = @_;
+    my $outputfile = join( '/', ( $self->reference_output_directory, $metadata_filename ) );
+    $self->logger->info( "Writing meta data to JSON file: " . $outputfile );
+    write_text( $outputfile, to_json $self->reference->to_hash );
 }
 
 sub _dos2unix_output_filename {
@@ -74,7 +97,7 @@ sub _run_dos2unix {
     my ($self) = @_;
     my $cmd = join( ' ', ( $self->dos2unix_exec, '-n', $self->fasta_file, $self->_dos2unix_output_filename, '> /dev/null 2>&1' ) );
 
-    print $cmd. "\n" if ( $self->verbose );
+    $self->logger->info("Command for dos2unix: $cmd");
 
     system($cmd);
     1;
@@ -106,7 +129,7 @@ sub _run_acgtn_only {
     my ($self) = @_;
     my $cmd = join( ' ', ( $self->fastaq_exec, 'acgtn_only', $self->_dos2unix_output_filename, $self->_acgtn_only_output_filename ) );
 
-    print $cmd. "\n" if ( $self->verbose );
+    $self->logger->info("Command for fastaq acgtn only: $cmd");
 
     system($cmd);
     1;
@@ -119,24 +142,24 @@ sub _sort_by_name_output_filename {
 
 sub _run_sort_by_name {
     my ($self) = @_;
-    my $cmd = join( ' ', ( $self->fastaq_exec, 'sort_by_name', $self->_fix_sequence_names_output_filename, $self->_sort_by_name_output_filename ) );
+    my $cmd =
+      join( ' ', ( $self->fastaq_exec, 'sort_by_name', $self->_fix_sequence_names_output_filename, $self->_sort_by_name_output_filename ) );
 
-    print $cmd. "\n" if ( $self->verbose );
+    $self->logger->info("Command for fastaq sort by name only: $cmd");
 
     system($cmd);
     1;
 }
 
-sub _fix_sequence_names_output_filename
-{
-     my ( $self ) = @_;
-     return join( '', ( $self->_tmp_dir, '/', 'fix_sequence_names.fa' ) );
+sub _fix_sequence_names_output_filename {
+    my ($self) = @_;
+    return join( '', ( $self->_tmp_dir, '/', 'fix_sequence_names.fa' ) );
 }
 
 sub _fix_sequence_names {
-    my ( $self ) = @_;
+    my ($self)           = @_;
     my $sequence_counter = 1;
-    my $seqio_obj = Bio::SeqIO->new(
+    my $seqio_obj        = Bio::SeqIO->new(
         -file     => $self->_acgtn_only_output_filename,
         -format   => "fasta",
         -alphabet => 'dna'
@@ -146,26 +169,51 @@ sub _fix_sequence_names {
     while ( my $seq_obj = $seqio_obj->next_seq ) {
         my $seq_name = $seq_obj->display_id;
         $seq_name =~ s![\W]!_!gi;
-        $seq_obj->display_id($seq_name."_".$sequence_counter);
+        $seq_obj->display_id( $seq_name . "_" . $sequence_counter );
         $seqout->write_seq($seq_obj);
         $sequence_counter++;
     }
 
 }
 
-
 sub basename_final_output_filename {
-    my ( $self ) = @_;
-    my $path = join( '/', ( $self->reference_store_dir, basename($self->fasta_file)) );
-    print $path. "\n" if $self->verbose;
-    return abs_path($path);
+    my ($self) = @_;
+
+    my ( $filename, $dirs, $suffix ) = fileparse( $self->fasta_file, qr/\.[^.]*/ );
+
+    my $genus         = 'unknown';
+    my $species       = 'unknown';
+    my @genus_species = split( '_', basename($filename) );
+
+    if ( @genus_species == 1 ) {
+        $genus = basename($filename);
+    }
+    elsif ( @genus_species > 1 ) {
+        $genus = shift @genus_species;
+        $species = join( '_', @genus_species );
+    }
+
+    $self->relative_directory( join( '/', ( $genus, $species ) ) );
+    my $directory = join( '/', ( $self->reference_store_dir, $self->relative_directory ) );
+    make_path($directory) if ( !-d $directory );
+    $self->reference_output_directory( abs_path($directory) );
+
+    my $path = join( '/', ( abs_path($directory), $filename . '.fa' ) );
+    $self->logger->info("Final output filename: $path");
+    return $path;
 }
 
 sub md5_final_output_filename {
     my ( $self, $md5 ) = @_;
-    my $path = join( '/', ( $self->reference_store_dir, $md5 . '.fa') );
-    print $path. "\n" if $self->verbose;
-    return abs_path($path);
+
+    $self->relative_directory( join( '/', ( $self->hash_toplevel_dir_name, $md5 ) ) );
+    my $directory = join( '/', ( $self->reference_store_dir, $self->relative_directory ) );
+
+    make_path($directory) if ( !-d $directory );
+    $self->reference_output_directory( abs_path($directory) );
+    my $path = join( '/', ( abs_path($directory), $md5 . '.fa' ) );
+    $self->logger->info("Final output filename MD5: $path");
+    return $path;
 }
 
 no Moose;
