@@ -175,8 +175,17 @@ sub basename_final_output_filename {
     my $genus         = 'unknown';
     my $species       = 'unknown';
     my @genus_species = split( '_', basename($filename) );
-    $genus   = $genus_species[0] if ( @genus_species >= 1 );
-    $species = $genus_species[1] if ( @genus_species >= 2 );
+    
+    
+    if(@genus_species == 1)
+    {
+        $genus = basename($filename);
+    }
+    elsif(@genus_species > 1)
+    {
+        $genus = shift @genus_species;
+        $species = join('_', @genus_species);
+    }
 
     $self->relative_directory( join( '/', ( $genus, $species ) ) );
     my $directory = join( '/', ( $self->reference_store_dir, $self->relative_directory ) );

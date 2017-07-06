@@ -104,8 +104,7 @@ sub new_genomes {
             $self->logger->info( "Downloading assembly with accession " . $assembly->accession );
             push( @genomes_not_in_refs_index, $assembly );
         }
-        else
-        {
+        else {
             $self->logger->info( "Ignoring assembly " . $assembly->accession );
         }
     }
@@ -115,7 +114,7 @@ sub new_genomes {
 
 sub _build__working_directory_name {
     my ($self) = @_;
-    $self->logger->info( "Temp directory " .  $self->_working_directory->dirname() );
+    $self->logger->info( "Temp directory " . $self->_working_directory->dirname() );
     return $self->_working_directory->dirname();
 }
 
@@ -126,7 +125,7 @@ sub _build_assembly_summary_filename {
 
 sub download_assembly_summary {
     my ($self) = @_;
-    $self->logger->info( "Downloading summary from ".$self->url() );
+    $self->logger->info( "Downloading summary from " . $self->url() );
     system( "wget -O " . $self->assembly_summary_filename . " " . $self->url() . " > /dev/null 2>&1" );
     return $self;
 }
@@ -142,7 +141,7 @@ sub extract_complete_genomes {
         my @elements = split( /\t/, $line );
         next if ( @elements < 19 );
         if ( $elements[11] eq $self->assembly_type && $elements[10] eq $self->assembly_latest ) {
-            $self->logger->info( "Extracting Metadata for ".$elements[0] );
+            $self->logger->info( "Extracting Metadata for " . $elements[0] );
             my $a = Bio::ReferenceManager::NCBI::RefSeqAssembly->new(
                 species       => $elements[7],
                 strain        => $elements[8],
@@ -161,12 +160,12 @@ sub download_assembly {
     my $downloaded_filename = $self->_working_directory_name . '/' . $refseq_assembly->downloaded_filename;
     my $output_filename     = $self->output_directory . '/' . $refseq_assembly->normalised_species_name . '.fa';
 
-    my $downloading_command =  "wget -O " . $downloaded_filename . " " . $refseq_assembly->download_url . " > /dev/null 2>&1";
-    $self->logger->info( "downloading command ".$downloading_command );
-    system( $downloading_command );
-    
-    $self->logger->info( "unzip command "."gunzip " . $downloaded_filename );
-    system( "gunzip -c  $downloaded_filename > $output_filename" );
+    my $downloading_command = "wget -O " . $downloaded_filename . " " . $refseq_assembly->download_url . " > /dev/null 2>&1";
+    $self->logger->info( "downloading command " . $downloading_command );
+    system($downloading_command );
+
+    $self->logger->info( "unzip command " . "gunzip " . $downloaded_filename );
+    system("gunzip -c  $downloaded_filename > $output_filename");
     return $self;
 }
 

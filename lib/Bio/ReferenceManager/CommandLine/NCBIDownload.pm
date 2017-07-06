@@ -111,7 +111,7 @@ Options:
   -u STR NCBI assembly stats table [ftp://ftp.ncbi.nlm.nih.gov/.../assembly_summary.txt]
   -i STR Top level refs index filename [/lustre/scratch118/.../refs.index]
   -e     Download all genomes, not just new ones [FALSE]
-  -o STR output directory [references]
+  -o STR output directory [downloaded_assemblies]
   -v     verbose output to STDOUT
   -h     this help message
 
