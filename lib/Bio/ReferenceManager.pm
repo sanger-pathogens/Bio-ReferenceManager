@@ -76,6 +76,7 @@ sub prepare_fasta_files {
             dos2unix_exec       => $self->dos2unix_exec,
             fastaq_exec         => $self->fastaq_exec,
             logger              => $self->logger,
+            overwrite_files     => $self->overwrite_files,
         );
         $obj->fix_file_and_save;
         $obj->write_metadata_to_json( $self->reference_metadata );
@@ -114,7 +115,7 @@ sub index_files {
     for my $reference ( @{ $self->references } ) {
         my $output_base_dir = $reference->production_directory;
         my $fasta_file      = $reference->production_fasta;
-        
+
         ###### BEGIN Parallel #######
         $pm->start and next;    # fork here
         my $indexer = Bio::ReferenceManager::Indexers->new(
