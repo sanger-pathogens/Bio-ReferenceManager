@@ -31,16 +31,16 @@ sub downloaded_filename
 
 sub normalised_species_name {
     my ($self) = @_;
-    my $species = $self->species;
-    $species =~ s!\W!_!gi;
-    
-    my $accession = $self->accession;
-    $accession =~ s!\W!_!gi;
     
     my $strain = $self->strain || '';
-    $strain =~ s!\W!_!gi;
+    my $species_name = join('_',($self->species, $strain, $self->accession));
     
-    return join('_',($species, $strain, $accession));
+    # get rid of non word characters
+    $species_name =~ s!\W!_!gi;
+    # We dont want lots of underscores so collapse to 1
+    $species_name =~ s!_[_]+!_!g;
+    
+    return $species_name;
 }
 
 no Moose;
