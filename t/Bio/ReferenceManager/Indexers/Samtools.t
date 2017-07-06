@@ -21,4 +21,10 @@ like( $software_version, qr/^[]\d]+\.[\d]+/, 'got a version number out' );
 is( $obj->index_command('abc.fa'), 'samtools faidx abc.fa', 'indexing command' );
 is_deeply( $obj->expected_files('.'), [ './abc.fa.fai' ], 'expected files' );
 
+my $samtools_htslib_version = "Version: 1.3 (using htslib 1.3)";
+my $regex = $obj->version_regex;
+$samtools_htslib_version =~ m/$regex/;
+my $version_str =  $1;
+is( $version_str, '1.3', 'Check that new version style can be extracted');
+
 done_testing();
