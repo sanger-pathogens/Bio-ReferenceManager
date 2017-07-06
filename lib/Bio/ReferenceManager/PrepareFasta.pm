@@ -25,6 +25,7 @@ has 'fasta_file'             => ( is => 'ro', isa => 'Str',  required => 1 );
 has 'reference_store_dir'    => ( is => 'rw', isa => 'Str',  required => 1 );
 has 'name_as_hash'           => ( is => 'rw', isa => 'Bool', default  => 1 );
 has 'hash_toplevel_dir_name' => ( is => 'rw', isa => 'Str',  default  => 'hash' );
+has 'overwrite_files'        => ( is => 'rw', isa => 'Bool', default  => 0 );
 
 has 'reference_output_directory' => ( is => 'rw', isa => 'Maybe[Str]', required => 0 );
 has 'relative_directory'         => ( is => 'rw', isa => 'Maybe[Str]', required => 0 );
@@ -44,21 +45,25 @@ sub _build__tmp_dir {
 
 sub fix_file_and_save {
     my ($self) = @_;
-    $self->_run_dos2unix();
-    $self->is_valid_fasta( $self->_dos2unix_output_filename );
-    $self->_run_acgtn_only();
-    $self->_fix_sequence_names();
-    $self->_run_sort_by_name();
 
+    my $final_outputname = $self->basename_final_output_filename();
+
+    if ($self->name_as_hash || $self->overwrite_files || !( -e $final_outputname ) ) {
+        $self->logger->info("Regenerating FASTA file");
+        $self->_run_dos2unix();
+        $self->is_valid_fasta( $self->_dos2unix_output_filename );
+        $self->_run_acgtn_only();
+        $self->_fix_sequence_names();
+        $self->_run_sort_by_name();
+    }
+    else {
+        $self->logger->info("Not regenerating FASTA file since its there already");
+    }
     my $md5 = file_md5_hex( $self->_sort_by_name_output_filename );
     $self->logger->info( "MD5 for " . $self->fasta_file . ": $md5" );
 
-    my $final_outputname;
     if ( $self->name_as_hash ) {
         $final_outputname = $self->md5_final_output_filename($md5);
-    }
-    else {
-        $final_outputname = $self->basename_final_output_filename();
     }
 
     $self->logger->info( "Copy file " . $self->_sort_by_name_output_filename . " to " . $final_outputname );
@@ -175,16 +180,13 @@ sub basename_final_output_filename {
     my $genus         = 'unknown';
     my $species       = 'unknown';
     my @genus_species = split( '_', basename($filename) );
-    
-    
-    if(@genus_species == 1)
-    {
+
+    if ( @genus_species == 1 ) {
         $genus = basename($filename);
     }
-    elsif(@genus_species > 1)
-    {
+    elsif ( @genus_species > 1 ) {
         $genus = shift @genus_species;
-        $species = join('_', @genus_species);
+        $species = join( '_', @genus_species );
     }
 
     $self->relative_directory( join( '/', ( $genus, $species ) ) );
