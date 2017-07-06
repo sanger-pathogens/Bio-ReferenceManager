@@ -86,7 +86,8 @@ sub create_index_files {
                     logger          => $self->logger,
                     overwrite_files => $self->overwrite_files,
                     executable      => $executable,
-                    java_exec       => $self->java_exec
+                    java_exec       => $self->java_exec,
+                    output_base_dir => $self->output_base_dir
                 );
                 $indexer->run_indexing( $indexer->versioned_directory_name() );
             }

@@ -49,33 +49,33 @@ is($assembly_search->name,'valid_file', 'got the name of the assembly');
 is($assembly_search->reference_size,3000, 'got the length of the assembly');
 
 
-ok(
-    $obj = Bio::ReferenceManager->new(
-        fasta_files              => ['t/data/ReferenceManager/valid_file.fa'],
-        reference_store_dir      => $tmp_dirname . '/temprefs',
-        production_reference_dir => $tmp_dirname . '/productiondir',
-        name_as_hash             => 1,
-        dbh                      => $dbh
-    ),
-    'initialise with valid file and hashes as names'
-);
-
-ok( $obj->run, 'prepare the fasta files with hash' );
-ok(
-    -e $tmp_dirname . '/temprefs/hash/696fccea7acfb446b4e724611432db7b/' . '696fccea7acfb446b4e724611432db7b.fa',
-
-    'check file exists with hash'
-);
-ok( -e $tmp_dirname . '/temprefs/hash/696fccea7acfb446b4e724611432db7b/metadata.json', 'check metadata exists' );
-
-ok( -e $tmp_dirname . '/productiondir/hash/696fccea7acfb446b4e724611432db7b/' . '696fccea7acfb446b4e724611432db7b.fa',
-    'check production file exists with hash' );
-ok( -e $tmp_dirname . '/productiondir/hash/696fccea7acfb446b4e724611432db7b/metadata.json', 'check production metadata exists' );
-ok( -e $tmp_dirname . '/productiondir/refs.index',                                          'check toplevel refs index exists' );
-
-
-$assembly_search = $dbh->resultset('Assembly')->search({  name => '696fccea7acfb446b4e724611432db7b'})->first();
-is($assembly_search->name,'696fccea7acfb446b4e724611432db7b', 'got the name of the assembly where its a hash');
-is($assembly_search->reference_size,3000, 'got the length of the assembly where its a hash');
+#ok(
+#    $obj = Bio::ReferenceManager->new(
+#        fasta_files              => ['t/data/ReferenceManager/valid_file.fa'],
+#        reference_store_dir      => $tmp_dirname . '/temprefs',
+#        production_reference_dir => $tmp_dirname . '/productiondir',
+#        name_as_hash             => 1,
+#        dbh                      => $dbh
+#    ),
+#    'initialise with valid file and hashes as names'
+#);
+#
+#ok( $obj->run, 'prepare the fasta files with hash' );
+#ok(
+#    -e $tmp_dirname . '/temprefs/hash/696fccea7acfb446b4e724611432db7b/' . '696fccea7acfb446b4e724611432db7b.fa',
+#
+#    'check file exists with hash'
+#);
+#ok( -e $tmp_dirname . '/temprefs/hash/696fccea7acfb446b4e724611432db7b/metadata.json', 'check metadata exists' );
+#
+#ok( -e $tmp_dirname . '/productiondir/hash/696fccea7acfb446b4e724611432db7b/' . '696fccea7acfb446b4e724611432db7b.fa',
+#    'check production file exists with hash' );
+#ok( -e $tmp_dirname . '/productiondir/hash/696fccea7acfb446b4e724611432db7b/metadata.json', 'check production metadata exists' );
+#ok( -e $tmp_dirname . '/productiondir/refs.index',                                          'check toplevel refs index exists' );
+#
+#
+#$assembly_search = $dbh->resultset('Assembly')->search({  name => '696fccea7acfb446b4e724611432db7b'})->first();
+#is($assembly_search->name,'696fccea7acfb446b4e724611432db7b', 'got the name of the assembly where its a hash');
+#is($assembly_search->reference_size,3000, 'got the length of the assembly where its a hash');
 
 done_testing();
