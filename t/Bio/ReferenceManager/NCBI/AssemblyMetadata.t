@@ -28,6 +28,6 @@ ok( $refseq_assemblies = $obj->new_genomes, 'extract out assembly metadata for n
 is(@{$refseq_assemblies}, 15, 'Should be 15 assemblies');
 
 
-
-
 done_testing();
+
+

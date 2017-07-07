@@ -28,17 +28,41 @@ sub downloaded_filename {
     return $ftp_path[9] . $self->suffix;
 }
 
+sub remove_non_word_chars
+{
+     my ($self, $original) = @_;
+     # get rid of non word characters
+     $original =~ s!\W!_!gi;
+
+     # We dont want lots of underscores so collapse to 1
+     $original =~ s!_[_]+!_!g;
+     return $original;
+}
+
 sub normalised_species_name {
     my ($self) = @_;
 
     my $strain = $self->strain || '';
-    my $species_name = join( '_', ( $self->species, $strain, $self->accession ) );
+    $strain =~ s!strain=!!gi;
+    $strain = $self->remove_non_word_chars($strain);
+    
+    my $species = $self->remove_non_word_chars($self->species());
+    my $accession = $self->remove_non_word_chars($self->accession);
 
-    # get rid of non word characters
-    $species_name =~ s!\W!_!gi;
+    my $species_name = $accession;
+    # If strain name is already in species, no need to repeat it
+    if($species =~ m/$strain/)
+    {
+        $species_name = join( '_', ( $species, $accession ) );
+    }
+    else
+    {
+        $species_name = join( '_', ( $species, $strain, $accession ) );
+    }
 
-    # We dont want lots of underscores so collapse to 1
-    $species_name =~ s!_[_]+!_!g;
+    # get rid of double underscore
+    $species_name = $self->remove_non_word_chars($species_name);
+
 
     return $species_name;
 }
