@@ -24,6 +24,13 @@ sub production_fasta
     return join('/',($self->production_directory,$self->basename.'.fa')),
 }
 
+sub genus
+{
+    my ($self) = @_;
+    my @name_parts = split('_', $self->basename);
+    return $name_parts[0];
+}
+
 sub to_hash {
     my ($self) = @_;
     my %reference_metadata = (
