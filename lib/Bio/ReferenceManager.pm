@@ -12,6 +12,7 @@ use Moose;
 use File::Basename;
 use Parallel::ForkManager;
 use File::Path qw(make_path);
+use Cwd qw(abs_path getcwd);
 
 use Bio::ReferenceManager::Indexers;
 use Bio::ReferenceManager::PrepareFasta;
@@ -45,6 +46,9 @@ has 'index_filename' => ( is => 'ro', isa => 'Str', default => 'refs.index' );
 has 'driver' => ( is => 'ro', isa => 'Str', default => 'mysql' );
 has 'dbh' => ( is => 'ro', isa => 'Maybe[Bio::ReferenceManager::VRTrack::Schema]', required => 0 );
 
+has 'annotate'           => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'annotate_memory_gb' => ( is => 'rw', isa => 'Num',  default => 5 );
+
 sub run {
     my ($self) = @_;
     $self->logger->info("Preparing FASTA files");
@@ -61,6 +65,11 @@ sub run {
 
     $self->logger->info("Add references to the databases");
     $self->add_to_databases();
+
+    if ( $self->annotate ) {
+        $self->logger->info("Annotating genomes with Prokka");
+        $self->annotate_genomes();
+    }
 
     return $self;
 }
@@ -183,7 +192,35 @@ sub add_to_databases {
     return $self;
 }
 
-#Annotate bacteria
+# Todo: move to a separate class
+# Annotate bacteria
+sub annotate_genomes {
+    my ($self) = @_;
+    for my $reference ( @{ $self->references } ) {
+
+        # run annotation from reference directory
+        my $original_directory = getcwd();
+        chdir( abs_path( $reference->production_directory ) );
+
+        my $annotation_cmd = join(
+            ' ',
+            (
+                'bsub.py',                         $self->annotate_memory_gb,
+                $reference->basename . '_log',     'annotate_bacteria',
+                '-a',                              $reference->production_fasta,
+                '-o',                              $reference->production_directory . '/annotation',
+                '--sample_name',                   $reference->basename,
+                '--keep_original_order_and_names', '--genus',
+                $reference->genus
+            )
+        );
+        $self->logger->info( "Annotation command: " . $annotation_cmd );
+        system($annotation_cmd);
+
+        # Change back to the original working directory
+        chdir($original_directory);
+    }
+}
 
 __PACKAGE__->meta->make_immutable;
 no Moose;

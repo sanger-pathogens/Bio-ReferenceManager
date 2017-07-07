@@ -20,11 +20,11 @@ has 'script_name' => ( is => 'ro', isa => 'Str',      required => 1 );
 has 'help'        => ( is => 'rw', isa => 'Bool',     default  => 0 );
 has 'verbose'     => ( is => 'rw', isa => 'Bool',     default  => 0 );
 
-has 'input_files'  => ( is => 'rw', isa  => 'ArrayRef', default => sub { [] } );
-has 'reference_store_dir'      => ( is => 'rw', isa => 'Str',           default  => '/nfs/pathogen/refs' );
-has 'reference_metadata'       => ( is => 'rw', isa => 'Str',           default  => 'metadata.json' );
-has 'production_reference_dir' => ( is => 'rw', isa => 'Str',           default  => '/lustre/scratch118/infgen/pathogen/pathpipe/refs' );
-has 'processors'               => ( is => 'rw', isa => 'Int',           default  => 1 );
+has 'input_files' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'reference_store_dir'      => ( is => 'rw', isa => 'Str', default => '/nfs/pathogen/refs' );
+has 'reference_metadata'       => ( is => 'rw', isa => 'Str', default => 'metadata.json' );
+has 'production_reference_dir' => ( is => 'rw', isa => 'Str', default => '/lustre/scratch118/infgen/pathogen/pathpipe/refs' );
+has 'processors'               => ( is => 'rw', isa => 'Int', default => 1 );
 
 # for PrepareFasta
 has 'name_as_hash'  => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -38,13 +38,15 @@ has 'java_exec'       => ( is => 'rw', isa => 'Str',  default => 'java' );
 # for RefsIndex
 has 'index_filename' => ( is => 'rw', isa => 'Str', default => 'refs.index' );
 
+has 'annotate' => ( is => 'rw', isa => 'Bool', default => 1 );
+
 sub BUILD {
     my ($self) = @_;
 
     my (
-        $verbose,         $reference_store_dir, $reference_metadata, $production_reference_dir,
-        $processors,      $name_as_hash,        $dos2unix_exec,      $fastaq_exec,
-        $overwrite_files, $java_exec,           $index_filename,     $help
+        $verbose,        $reference_store_dir, $reference_metadata, $production_reference_dir, $processors,
+        $name_as_hash,   $dos2unix_exec,       $fastaq_exec,        $overwrite_files,          $java_exec,
+        $index_filename, $help,                $dont_annotate
     );
 
     GetOptionsFromArray(
@@ -60,6 +62,7 @@ sub BUILD {
         'o|overwrite_files'      => \$overwrite_files,
         'java_exec=s'            => \$java_exec,
         'i|index_filename=s'     => \$index_filename,
+        'a|dont_annotate'        => \$dont_annotate,
         'h|help'                 => \$help,
     );
 
@@ -68,18 +71,19 @@ sub BUILD {
         $self->logger->level(10000);
     }
 
-    $self->verbose($verbose)                                   if ( defined($verbose) );
-    $self->reference_store_dir(abs_path($reference_store_dir))           if ( defined($reference_store_dir) );
-    $self->reference_metadata($reference_metadata)             if ( defined($reference_metadata) );
-    $self->production_reference_dir(abs_path($production_reference_dir)) if ( defined($production_reference_dir) );
-    $self->processors($processors)                             if ( defined($processors) );
-    $self->name_as_hash($name_as_hash)                         if ( defined($name_as_hash) );
-    $self->dos2unix_exec($dos2unix_exec)                       if ( defined($dos2unix_exec) );
-    $self->fastaq_exec($fastaq_exec)                           if ( defined($fastaq_exec) );
-    $self->overwrite_files($overwrite_files)                   if ( defined($overwrite_files) );
-    $self->java_exec($java_exec)                               if ( defined($java_exec) );
-    $self->index_filename($index_filename)                     if ( defined($index_filename) );
-    $self->help($help)                                         if ( defined($help) );
+    $self->verbose($verbose)                                               if ( defined($verbose) );
+    $self->reference_store_dir( abs_path($reference_store_dir) )           if ( defined($reference_store_dir) );
+    $self->reference_metadata($reference_metadata)                         if ( defined($reference_metadata) );
+    $self->production_reference_dir( abs_path($production_reference_dir) ) if ( defined($production_reference_dir) );
+    $self->processors($processors)                                         if ( defined($processors) );
+    $self->name_as_hash($name_as_hash)                                     if ( defined($name_as_hash) );
+    $self->dos2unix_exec($dos2unix_exec)                                   if ( defined($dos2unix_exec) );
+    $self->fastaq_exec($fastaq_exec)                                       if ( defined($fastaq_exec) );
+    $self->overwrite_files($overwrite_files)                               if ( defined($overwrite_files) );
+    $self->java_exec($java_exec)                                           if ( defined($java_exec) );
+    $self->index_filename($index_filename)                                 if ( defined($index_filename) );
+    $self->help($help)                                                     if ( defined($help) );
+    $self->annotate(0)                                                     if ( defined($dont_annotate) );
 
     if ( @{ $self->args } < 1 ) {
         $self->logger->error("Error: You need to provide at least 1 file");
@@ -114,6 +118,7 @@ sub run {
         java_exec                => $self->java_exec,
         index_filename           => $self->index_filename,
         logger                   => $self->logger,
+        annotate                 => $self->annotate,
     );
     $obj->run;
 
@@ -133,6 +138,7 @@ Options: -o       overwrite index files [False]
          -m STR   reference metadata filename [metadata.json]
          -n       use a hash of the file as the reference name [FALSE]
          -i STR   toplevel index filename [refs.index]
+         -a       Dont annotate with Prokka [FALSE]
          -v       verbose output to STDOUT
          -h       this help message
          

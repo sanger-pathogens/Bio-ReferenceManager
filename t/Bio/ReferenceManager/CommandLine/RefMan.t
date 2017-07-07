@@ -26,7 +26,7 @@ my $script_name = 'Bio::ReferenceManager::CommandLine::RefMan';
 
 `echo "valid_file	$tmp_dirname/proddir/valid/file/valid_file.fa" > t/data/CommandLine/expected_refs.index`;
 
-my %scripts_and_expected_files = ( '-r '.$tmp_dirname.'/refstore -d '.$tmp_dirname.'/proddir t/data/CommandLine/valid_file.fa' => [ 't/data/CommandLine/expected_refs.index', $tmp_dirname.'/proddir/refs.index' ] );
+my %scripts_and_expected_files = ( '-a -r '.$tmp_dirname.'/refstore -d '.$tmp_dirname.'/proddir t/data/CommandLine/valid_file.fa' => [ 't/data/CommandLine/expected_refs.index', $tmp_dirname.'/proddir/refs.index' ] );
 
 mock_execute_script_and_check_output_verbose( $script_name, \%scripts_and_expected_files );
 unlink('t/data/CommandLine/expected_refs.index');
