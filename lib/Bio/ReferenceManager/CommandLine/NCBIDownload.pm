@@ -65,7 +65,7 @@ sub BUILD {
     $self->assembly_latest($assembly_latest)                               if ( defined($assembly_latest) );
     $self->help($help)                                                     if ( defined($help) );
     $self->processors($processors)                                         if ( defined($processors) );
-    $self->output_directory( abs_path( $self->output_directory ) )         if ( defined($output_directory) );
+    $self->output_directory( abs_path( $output_directory ) )         if ( defined($output_directory) );
 
 }
 
