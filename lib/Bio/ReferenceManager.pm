@@ -99,7 +99,7 @@ sub copy_files_to_production {
     my ($self) = @_;
 
     my $pm = new Parallel::ForkManager( $self->processors );
-    for my $reference ( @{ $self->references } ) {
+    for my $reference ( @{ $self->references    } ) {
         my ( $filename, $source_directory, $suffix ) = fileparse( $reference->final_filename, qr/\.[^.]*/ );
         my $destination_directory = join( '/', ( $self->production_reference_dir, $reference->relative_directory ) );
         make_path($destination_directory);
