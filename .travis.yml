@@ -12,11 +12,15 @@ before_install:
 - cpanm local::lib
 - eval "$(perl -Mlocal::lib=${PWD}/perl_modules)"
 - cpanm --notest Dist::Zilla
+- pip3 install pyfastaq
 addons:
   apt:
     packages:
-    - git
-    - wget
+    - dos2unix
+    - python3
+    - python3-pip
+    - python3-biopython
+    - rsync
     - file
     - build-essential
     - libssl-dev
@@ -25,6 +29,10 @@ addons:
     - cpanminus
     - libz-dev
     - libdb-dev
+    - samtools
+    - smalt
+    - bwa
+    - bowtie2
 perl:
 - "5.30"
 install:
