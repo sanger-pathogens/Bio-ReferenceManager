@@ -36,6 +36,8 @@ addons:
     - bowtie2
 perl:
 - "5.30"
+services:
+- docker
 install:
 - git config --local user.name "Pathogen Informatics CI"
 - git config --local user.email "pathdev@sanger.ac.uk"
