@@ -1,18 +1,28 @@
-#
-#  From this base-image / starting-point
-#
-FROM debian:testing
+FROM ubuntu:20.04
 
-#
-#  Authorship
-#
-MAINTAINER ap13@sanger.ac.uk
+ARG TAG
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y dos2unix python3 python3-setuptools python3-biopython python3-pip git cpanminus libdist-zilla-perl libmodule-install-perl samtools smalt bwa bowtie2
+RUN apt-get update \
+    && apt-get upgrade -yq \
+    && apt-get update \
+    && apt-get install -yq \
+      dos2unix \
+      rsync \
+      gzip \
+      python3 \ 
+      python3-setuptools \
+      python3-pip \
+      cpanminus
 RUN pip3 install pyfastaq
 
-RUN git clone https://github.com/andrewjpage/Bio-ReferenceManager.git
-RUN cpanm Module::Metadata
-RUN cd Bio-ReferenceManager && dzil authordeps | cpanm
-RUN cd Bio-ReferenceManager && dzil listdeps | cpanm 
-RUN cd Bio-ReferenceManager && dzil install
+
+#fastaq
+#smalt
+#bwa
+#bowtie2
+#samtools
+#Picard
+
+
+RUN cpanm https://github.com/sanger-pathogens/Bio-AutomatedAnnotation/releases/download/v${TAG}/Bio-AutomatedAnnotation-${TAG}.tar.gz

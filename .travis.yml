@@ -60,3 +60,7 @@ deploy:
   file_glob: true
   file: "*.tar.gz"
   skip_cleanup: true
+after_deploy:
+- docker build --no-cache --build-arg TAG=${TRAVIS_TAG} -t bio-referencemanager:${TRAVIS_TAG} - < Dockerfile
+- docker tag bio-referencemanager:${TRAVIS_TAG} sangerpathogens/bio-referencemanager:${TRAVIS_TAG}
+- docker push sangerpathogens/bio-referencemanager:${TRAVIS_TAG}
