@@ -27,7 +27,7 @@ sub reference_names {
 
 sub search_reference_names {
     my ($self) = @_;
-    my @ref_names = keys $self->reference_names();
+    my @ref_names = keys %$self->reference_names();
     my $assemblies;
     eval { $assemblies = $self->dbh->resultset('Assembly')->search( { name => \@ref_names } ); };
     return $assemblies;
