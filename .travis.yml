@@ -61,7 +61,8 @@ deploy:
   file: "*.tar.gz"
   skip_cleanup: true
 after_deploy:
-- echo after_deploy
+- echo after_deploy $(pwd)
+- echo after_deploy ${TRAVIS_REPO_SLUG}
 - docker build --no-cache --build-arg TAG=${TIMESTAMP_VERSION} -t bio-referencemanager:${TIMESTAMP_VERSION} - < Dockerfile
 - docker tag bio-referencemanager:${TIMESTAMP_VERSION} sangerpathogens/bio-referencemanager:${TIMESTAMP_VERSION}
 - docker push sangerpathogens/bio-referencemanager:${TIMESTAMP_VERSION}
