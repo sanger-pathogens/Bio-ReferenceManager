@@ -25,4 +25,4 @@ RUN pip3 install pyfastaq
 #Picard
 
 
-RUN cpanm https://github.com/sanger-pathogens/Bio-AutomatedAnnotation/releases/download/v${TAG}/Bio-AutomatedAnnotation-${TAG}.tar.gz
+RUN cpanm https://github.com/sanger-pathogens/Bio-ReferenceManager/releases/download/v${TAG}/Bio-ReferenceManager-${TAG}.tar.gz
