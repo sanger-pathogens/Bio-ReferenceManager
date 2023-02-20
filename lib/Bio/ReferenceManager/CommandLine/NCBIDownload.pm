@@ -25,7 +25,7 @@ has 'downloaded_filename'            => ( is => 'rw', isa => 'Str',  default => 
 has 'output_directory'               => ( is => 'rw', isa => 'Str',  default => 'downloaded_assemblies' );
 has 'download_only_new'              => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'dont_redownload_assembly_stats' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'index_filename'  => ( is => 'rw', isa => 'Str', default => '/lustre/scratch118/infgen/pathogen/pathpipe/refs/refs.index' );
+has 'index_filename'  => ( is => 'rw', isa => 'Str', default => '/data/pam/applications/vr-pipelines/refs/refs.index' );
 has 'assembly_type'   => ( is => 'rw', isa => 'Str', default => "Complete Genome" );
 has 'assembly_latest' => ( is => 'rw', isa => 'Str', default => "latest" );
 has 'processors'      => ( is => 'rw', isa => 'Int', default => 1 );
@@ -110,7 +110,7 @@ By default it will download all new complete genomes from RefSeq
 
 Options: 
   -u STR NCBI assembly stats table [ftp://ftp.ncbi.nlm.nih.gov/.../assembly_summary.txt]
-  -i STR Top level refs index filename [/lustre/scratch118/.../refs.index]
+  -i STR Top level refs index filename [/data/pam.../refs.index]
   -e     Download all genomes, not just new ones [FALSE]
   -p INT number of processors [1]
   -o STR output directory [downloaded_assemblies]
