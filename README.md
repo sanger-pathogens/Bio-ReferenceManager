@@ -63,7 +63,7 @@ Add references to the pipelines.
 Options: -o       overwrite index files [False]
          -p INT   number of processors [1]
          -r STR   reference store directory [/nfs/pathogen/refs]
-         -d STR   production references direcotry [/lustre/scratch118/.../refs]
+         -d STR   production references direcotry [/data/pam.../refs]
          -m STR   reference metadata filename [metadata.json]
          -n       use a hash of the file as the reference name [FALSE]
          -i STR   toplevel index filename [refs.index]
